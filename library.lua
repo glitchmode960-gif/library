@@ -1,8 +1,8 @@
 --[[
-    Sensei UI Library — Wide Mobile Edition
+    Sensei UI Library — ZX Edition (ZyronX-adapted)
     Author: CreativeGPT & Douwe
-    Version: 3.0.0
-    Style: Blue Neon, landscape-optimized, Delta-style minibar
+    Version: 4.0.0
+    Style: Blue Neon, mobile-optimized, Delta-style minibar
     Load: local Sensei = loadstring(game:HttpGet("https://raw.githubusercontent.com/glitchmode960-gif/library/main/library.lua"))()
 ]]
 
@@ -17,19 +17,19 @@ local LocalPlayer = Players.LocalPlayer
 
 local Library = {
     WhitelistedUsers = {},
-    Version = "3.0.0",
+    Version = "4.0.0",
     Brand   = "Sensei",
 }
 
 -- ============================================================
--- File System (safe fallbacks)
+-- File System
 -- ============================================================
-local _isfolder  = isfolder  or function() return true end
-local _makefolder= makefolder or function() end
-local _writefile = writefile or function() warn("[Sensei] writefile not supported.") end
-local _readfile  = readfile  or function() return "{}" end
-local _listfiles = listfiles or function() return {} end
-local _delfile   = delfile   or function() warn("[Sensei] delfile not supported.") end
+local _isfolder   = isfolder   or function() return true end
+local _makefolder = makefolder or function() end
+local _writefile  = writefile  or function() warn("[Sensei] writefile not supported.") end
+local _readfile   = readfile   or function() return "{}" end
+local _listfiles  = listfiles  or function() return {} end
+local _delfile    = delfile    or function() warn("[Sensei] delfile not supported.") end
 
 local function SafeCopy(text)
     if setclipboard then setclipboard(text)
@@ -38,7 +38,7 @@ local function SafeCopy(text)
 end
 
 -- ============================================================
--- Palette (Blue Neon)
+-- Palette (Blue Neon, ZX-style)
 -- ============================================================
 local AccentColor      = Color3.fromRGB(0, 170, 255)
 local AccentColorLight = Color3.fromRGB(120, 220, 255)
@@ -46,11 +46,12 @@ local BackgroundColor  = Color3.fromRGB(15, 18, 24)
 local CardColor        = Color3.fromRGB(24, 28, 36)
 local ItemColor        = Color3.fromRGB(34, 40, 50)
 local HoverColor       = Color3.fromRGB(44, 52, 64)
-local TextColor        = Color3.fromRGB(235, 240, 248)
+local TextColor        = Color3.fromRGB(240, 245, 252)
 local SubTextColor     = Color3.fromRGB(150, 165, 185)
-local StrokeColor      = Color3.fromRGB(40, 60, 90)
+local StrokeColor      = Color3.fromRGB(45, 65, 100)
 local DangerColor      = Color3.fromRGB(200, 60, 70)
-local SuccessColor     = Color3.fromRGB(50, 150, 80)
+local SuccessColor     = Color3.fromRGB(50, 160, 90)
+local WarningColor     = Color3.fromRGB(255, 190, 70)
 
 -- ============================================================
 -- Utility: Create
@@ -58,9 +59,7 @@ local SuccessColor     = Color3.fromRGB(50, 150, 80)
 local function Create(className, props)
     local inst = Instance.new(className)
     if className == "TextBox" then inst.Text = "" end
-    for k, v in pairs(props or {}) do
-        inst[k] = v
-    end
+    for k, v in pairs(props or {}) do inst[k] = v end
     if className == "TextLabel" or className == "TextButton" or className == "TextBox" then
         if not (props and props.TextColor3) then inst.TextColor3 = TextColor end
         inst.TextTransparency = 0
@@ -68,20 +67,14 @@ local function Create(className, props)
     return inst
 end
 
--- ============================================================
--- Utility: Tween
--- ============================================================
 local function Tween(instance, properties, duration)
-    duration = duration or 0.22
+    duration = duration or 0.25
     local info = TweenInfo.new(duration, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
     local tw = TweenService:Create(instance, info, properties)
     tw:Play()
     return tw
 end
 
--- ============================================================
--- Utility: Bounce
--- ============================================================
 local function AddBounce(button, scaleFactor)
     scaleFactor = scaleFactor or 0.96
     local scale = button:FindFirstChild("UIScale") or Create("UIScale", {Parent = button, Scale = 1})
@@ -102,14 +95,10 @@ local function AddBounce(button, scaleFactor)
     end)
 end
 
--- ============================================================
--- Utility: Draggable
--- ============================================================
 local function MakeDraggable(topbar, object)
     topbar.Active = true
     object.Active = true
     local dragging, dragInput, dragStart, startPos
-
     topbar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
             or input.UserInputType == Enum.UserInputType.Touch then
@@ -117,27 +106,22 @@ local function MakeDraggable(topbar, object)
             dragStart = input.Position
             startPos = object.Position
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
             end)
         end
     end)
-
     topbar.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement
             or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
-
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
             object.Position = UDim2.new(
                 startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 end
@@ -158,7 +142,7 @@ function Library:Notify(options)
     local accent = AccentColor
     if kind == "success" then accent = SuccessColor
     elseif kind == "error" then accent = DangerColor
-    elseif kind == "warning" then accent = Color3.fromRGB(255, 200, 90) end
+    elseif kind == "warning" then accent = WarningColor end
 
     local Notif = Create("Frame", {
         Parent = GlobalNotifContainer,
@@ -193,7 +177,6 @@ function Library:Notify(options)
             if d:IsA("TextLabel") then Tween(d, {TextTransparency = 0}, 0.3) end
         end
     end)
-
     task.delay(duration, function()
         Tween(Notif, {BackgroundTransparency = 1}, 0.35)
         Tween(Stroke, {Transparency = 1}, 0.35)
@@ -206,11 +189,11 @@ function Library:Notify(options)
 end
 
 -- ============================================================
--- CREATE WINDOW (WIDE / LANDSCAPE)
+-- CREATE WINDOW (ZyronX-style, но мобильный)
 -- ============================================================
 function Library:CreateWindow(options)
     local hubName  = "Sensei"
-    local subText  = "Wide Edition"
+    local subText  = "ZX Edition"
     local subColor = AccentColorLight
 
     if type(options) == "table" then
@@ -239,8 +222,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Size = UDim2.new(0, 260, 0, 300),
         Position = UDim2.new(1, -270, 0, 12),
-        ZIndex = 200,
-        Active = false,
+        ZIndex = 200, Active = false,
     })
     Create("UIListLayout", {
         Parent = NotifContainer,
@@ -252,12 +234,12 @@ function Library:CreateWindow(options)
     GlobalNotifContainer = NotifContainer
 
     -- ========================================================
-    -- Main Frame (WIDE)
+    -- MAIN FRAME (широкое, ZX-стиль)
     -- ========================================================
     local MainFrame = Create("Frame", {
         Parent = ScreenGui,
         BackgroundColor3 = BackgroundColor,
-        Size = UDim2.new(0, 500, 0, 300),   -- ШИРОКОЕ окно
+        Size = UDim2.new(0, 520, 0, 320),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
         ClipsDescendants = true,
@@ -265,21 +247,23 @@ function Library:CreateWindow(options)
         Active = true,
         ZIndex = 5,
     })
-    local MainScale = Create("UIScale", {Parent = MainFrame, Scale = 1})
+    local MainScale = Create("UIScale", {Parent = MainFrame, Scale = 0.85})
     Create("UICorner", {Parent = MainFrame, CornerRadius = UDim.new(0, 12)})
     local MainStroke = Create("UIStroke", {
-        Parent = MainFrame, Color = StrokeColor, Thickness = 1.4, Transparency = 0,
+        Parent = MainFrame, Color = StrokeColor, Thickness = 1.4, Transparency = 0.2,
     })
+    -- появление при создании
+    Tween(MainScale, {Scale = 1}, 0.5)
 
-    -- Minibar
+    -- ========================================================
+    -- MINIBAR (Delta-style)
+    -- ========================================================
     local Minibar = Create("Frame", {
         Parent = ScreenGui,
         BackgroundColor3 = CardColor,
         Size = UDim2.new(0, 180, 0, 44),
         Position = UDim2.new(0.5, -90, 1, -80),
-        Visible = false,
-        Active = true,
-        ZIndex = 10,
+        Visible = false, Active = true, ZIndex = 10,
     })
     Create("UICorner", {Parent = Minibar, CornerRadius = UDim.new(0, 12)})
     local MinibarStroke = Create("UIStroke", {
@@ -318,62 +302,61 @@ function Library:CreateWindow(options)
     MinibarExpand.MouseButton1Click:Connect(function()
         Minibar.Visible = false
         MainFrame.Visible = true
-        MainScale.Scale = 0.9
+        MainScale.Scale = 0.85
         Tween(MainScale, {Scale = 1}, 0.35)
         Tween(MainFrame, {BackgroundTransparency = 0}, 0.35)
     end)
 
-    -- TopBar
+    -- ========================================================
+    -- TOPBAR
+    -- ========================================================
     local TopBar = Create("Frame", {
         Parent = MainFrame,
         BackgroundColor3 = CardColor,
-        BackgroundTransparency = 0,
-        Size = UDim2.new(1, 0, 0, 40),
+        BackgroundTransparency = 0.15,
+        Size = UDim2.new(1, 0, 0, 42),
         Position = UDim2.new(0, 0, 0, 0),
-        Active = true,
-        BorderSizePixel = 0,
-        ZIndex = 6,
+        Active = true, BorderSizePixel = 0, ZIndex = 6,
     })
     Create("UICorner", {Parent = TopBar, CornerRadius = UDim.new(0, 12)})
     Create("Frame", {
         Parent = TopBar, BackgroundColor3 = CardColor,
-        BackgroundTransparency = 0, BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 0, 14), Position = UDim2.new(0, 0, 1, -14),
-        ZIndex = 6,
+        BackgroundTransparency = 0.15, BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 14),
+        Position = UDim2.new(0, 0, 1, -14), ZIndex = 6,
     })
     MakeDraggable(TopBar, MainFrame)
 
     local TitleContainer = Create("Frame", {
         Parent = TopBar, BackgroundTransparency = 1,
         Size = UDim2.new(0, 250, 1, 0),
-        Position = UDim2.new(0, 12, 0, 0),
-        ZIndex = 7,
+        Position = UDim2.new(0, 16, 0, 0), ZIndex = 7,
     })
     Create("TextLabel", {
         Parent = TitleContainer,
-        Text = hubName, Font = Enum.Font.GothamBold, TextSize = 13,
+        Text = hubName, Font = Enum.Font.GothamBold, TextSize = 14,
         TextColor3 = TextColor, BackgroundTransparency = 1,
-        Position = UDim2.new(0, 0, 0, 5), Size = UDim2.new(1, 0, 0, 15),
+        Position = UDim2.new(0, 0, 0, 5), Size = UDim2.new(1, 0, 0, 16),
         TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7,
     })
     Create("TextLabel", {
         Parent = TitleContainer,
         Text = subText, Font = Enum.Font.Gotham, TextSize = 10,
         TextColor3 = subColor, BackgroundTransparency = 1,
-        Position = UDim2.new(0, 0, 0, 21), Size = UDim2.new(1, 0, 0, 12),
+        Position = UDim2.new(0, 0, 0, 22), Size = UDim2.new(1, 0, 0, 12),
         TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7,
     })
 
     local CloseBtn = Create("TextButton", {
         Parent = TopBar, Text = "✕", Font = Enum.Font.GothamBold, TextSize = 14,
         TextColor3 = Color3.fromRGB(255, 100, 100), BackgroundTransparency = 1,
-        Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(1, -34, 0, 0),
+        Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(1, -36, 0, 0),
         AutoButtonColor = false, ZIndex = 7,
     })
     local MinBtn = Create("TextButton", {
         Parent = TopBar, Text = "—", Font = Enum.Font.GothamBold, TextSize = 16,
-        TextColor3 = Color3.fromRGB(255, 200, 90), BackgroundTransparency = 1,
-        Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(1, -64, 0, 0),
+        TextColor3 = WarningColor, BackgroundTransparency = 1,
+        Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(1, -66, 0, 0),
         AutoButtonColor = false, ZIndex = 7,
     })
     AddBounce(CloseBtn); AddBounce(MinBtn)
@@ -381,10 +364,9 @@ function Library:CreateWindow(options)
     MinBtn.MouseButton1Click:Connect(function()
         Minibar.Position = UDim2.new(
             MainFrame.Position.X.Scale,
-            MainFrame.Position.X.Offset - 90 + 250,
+            MainFrame.Position.X.Offset - 90 + 260,
             MainFrame.Position.Y.Scale,
-            MainFrame.Position.Y.Offset - 80
-        )
+            MainFrame.Position.Y.Offset - 80)
         Tween(MainScale, {Scale = 0.85}, 0.28)
         Tween(MainFrame, {BackgroundTransparency = 1}, 0.28)
         task.wait(0.22)
@@ -402,14 +384,14 @@ function Library:CreateWindow(options)
     end)
 
     -- ========================================================
-    -- Sidebar (слева)
+    -- SIDEBAR (как в ZyronX)
     -- ========================================================
     local Sidebar = Create("Frame", {
         Parent = MainFrame,
         BackgroundColor3 = CardColor,
-        BackgroundTransparency = 0,
-        Size = UDim2.new(0, 120, 1, -40),
-        Position = UDim2.new(0, 0, 0, 40),
+        BackgroundTransparency = 0.15,
+        Size = UDim2.new(0, 130, 1, -42),
+        Position = UDim2.new(0, 0, 0, 42),
         Active = true, BorderSizePixel = 0, ZIndex = 6,
     })
 
@@ -432,25 +414,25 @@ function Library:CreateWindow(options)
 
     Create("Frame", {
         Parent = MainFrame, BackgroundColor3 = StrokeColor,
-        BorderSizePixel = 0, Size = UDim2.new(0, 1, 1, -40),
-        Position = UDim2.new(0, 120, 0, 40), ZIndex = 6,
+        BorderSizePixel = 0, Size = UDim2.new(0, 1, 1, -42),
+        Position = UDim2.new(0, 130, 0, 42), ZIndex = 6,
     })
 
     -- ========================================================
-    -- Content Area (справа, широкий)
+    -- CONTENT AREA
     -- ========================================================
     local ContentArea = Create("Frame", {
         Parent = MainFrame, BackgroundTransparency = 1,
-        Size = UDim2.new(1, -125, 1, -40),
-        Position = UDim2.new(0, 125, 0, 40),
+        Size = UDim2.new(1, -135, 1, -42),
+        Position = UDim2.new(0, 135, 0, 42),
         Active = true, ZIndex = 6,
     })
     Create("UIPadding", {
         Parent = ContentArea,
-        PaddingTop = UDim.new(0, 10),
-        PaddingBottom = UDim.new(0, 10),
-        PaddingLeft = UDim.new(0, 10),
-        PaddingRight = UDim.new(0, 10),
+        PaddingTop = UDim.new(0, 12),
+        PaddingBottom = UDim2.new(0, 12),
+        PaddingLeft = UDim.new(0, 12),
+        PaddingRight = UDim2.new(0, 12),
     })
 
     local Window = {
@@ -472,7 +454,7 @@ function Library:CreateWindow(options)
 
     return Window
 end-- ============================================================
--- TAB / PAGE / SECTION
+-- TAB / PAGE / SECTION (в стиле ZyronX)
 -- ============================================================
 local function AttachWindowMethods(Window)
     local TabContainer = Window._refs.TabContainer
@@ -495,16 +477,17 @@ local function AttachWindowMethods(Window)
         local TabBtn = Create("TextButton", {
             Parent = TabContainer, Text = "",
             BackgroundColor3 = HoverColor, BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 34),
+            Size = UDim2.new(1, 0, 0, 36),
             AutoButtonColor = false, BorderSizePixel = 0,
             ZIndex = 8,
         })
         Create("UICorner", {Parent = TabBtn, CornerRadius = UDim.new(0, 8)})
         AddBounce(TabBtn, 0.97)
 
+        -- Индикатор слева (как в ZyronX)
         local Indicator = Create("Frame", {
             Parent = TabBtn,
-            BackgroundColor3 = isLocked and Color3.fromRGB(255, 200, 70) or AccentColor,
+            BackgroundColor3 = isLocked and WarningColor or AccentColor,
             Size = UDim2.new(0, 3, 0, 0),
             Position = UDim2.new(0, 0, 0.5, 0),
             AnchorPoint = Vector2.new(0, 0.5),
@@ -514,10 +497,10 @@ local function AttachWindowMethods(Window)
 
         local Txt = Create("TextLabel", {
             Parent = TabBtn, Text = tabName,
-            Font = Enum.Font.GothamBold, TextSize = 12,
+            Font = Enum.Font.GothamBold, TextSize = 13,
             TextColor3 = SubTextColor, BackgroundTransparency = 1,
-            Size = UDim2.new(1, -36, 1, 0),
-            Position = UDim2.new(0, 12, 0, 0),
+            Size = UDim2.new(1, -40, 1, 0),
+            Position = UDim2.new(0, 14, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Left,
             TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 9,
         })
@@ -526,8 +509,8 @@ local function AttachWindowMethods(Window)
             Create("TextLabel", {
                 Parent = TabBtn, Text = "🔒", BackgroundTransparency = 1,
                 Size = UDim2.new(0, 16, 0, 16),
-                Position = UDim2.new(1, -20, 0.5, -8),
-                TextSize = 12, TextColor3 = Color3.fromRGB(255, 200, 70),
+                Position = UDim2.new(1, -22, 0.5, -8),
+                TextSize = 12, TextColor3 = WarningColor,
                 ZIndex = 9,
             })
         end
@@ -538,6 +521,7 @@ local function AttachWindowMethods(Window)
             ZIndex = 7,
         })
 
+        -- Навигация страниц (как в ZyronX)
         local PageNav = Create("Frame", {
             Parent = TabContent, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 30),
@@ -545,7 +529,7 @@ local function AttachWindowMethods(Window)
         })
         Create("UIListLayout", {
             Parent = PageNav, FillDirection = Enum.FillDirection.Horizontal,
-            Padding = UDim.new(0, 12),
+            Padding = UDim.new(0, 16),
             VerticalAlignment = Enum.VerticalAlignment.Center,
         })
 
@@ -583,11 +567,12 @@ local function AttachWindowMethods(Window)
 
             Window.CurrentTab = TabConfig
             TabConfig.Content.Visible = true
-            TabConfig.Content.Position = UDim2.new(0, 0, 0, 10)
-            Tween(TabConfig.Content, {Position = UDim2.new(0, 0, 0, 0)}, 0.3)
+            -- Плавный выезд контента снизу (как в ZyronX)
+            TabConfig.Content.Position = UDim2.new(0, 0, 0, 15)
+            Tween(TabConfig.Content, {Position = UDim2.new(0, 0, 0, 0)}, 0.35)
 
             Tween(TabBtn, {BackgroundTransparency = 0.15}, 0.2)
-            Tween(Indicator, {Size = UDim2.new(0, 3, 0, 18)}, 0.3)
+            Tween(Indicator, {Size = UDim2.new(0, 3, 0, 20)}, 0.3)
             Tween(Txt, {TextColor3 = TextColor}, 0.2)
 
             if #TabConfig.Pages > 0 and not TabConfig.CurrentPage then
@@ -600,13 +585,13 @@ local function AttachWindowMethods(Window)
         end)
 
         -- ================================================
-        -- CreatePage (ДВЕ КОЛОНКИ — как в ZyronX, но без Page)
+        -- CreatePage
         -- ================================================
         function TabConfig:CreatePage(pageName)
             pageName = pageName or "Page"
             local PageBtn = Create("TextButton", {
                 Parent = PageNav, Text = pageName,
-                Font = Enum.Font.GothamBold, TextSize = 12,
+                Font = Enum.Font.GothamBold, TextSize = 13,
                 TextColor3 = SubTextColor, BackgroundTransparency = 1,
                 Size = UDim2.new(0, 0, 1, 0),
                 AutomaticSize = Enum.AutomaticSize.X,
@@ -631,26 +616,26 @@ local function AttachWindowMethods(Window)
                 ZIndex = 8,
             })
 
-            -- ДВЕ КОЛОНКИ для широкого окна
+            -- ДВЕ КОЛОНКИ (как в ZyronX)
             local LeftColumn = Create("Frame", {
                 Parent = PageScroll, BackgroundTransparency = 1,
-                Size = UDim2.new(0.5, -4, 1, 0),
+                Size = UDim2.new(0.5, -5, 1, 0),
                 ZIndex = 9,
             })
             local RightColumn = Create("Frame", {
                 Parent = PageScroll, BackgroundTransparency = 1,
-                Size = UDim2.new(0.5, -4, 1, 0),
-                Position = UDim2.new(0.5, 4, 0, 0),
+                Size = UDim2.new(0.5, -5, 1, 0),
+                Position = UDim2.new(0.5, 5, 0, 0),
                 ZIndex = 9,
             })
 
             local LeftLayout = Create("UIListLayout", {
                 Parent = LeftColumn, SortOrder = Enum.SortOrder.LayoutOrder,
-                Padding = UDim.new(0, 8),
+                Padding = UDim.new(0, 10),
             })
             local RightLayout = Create("UIListLayout", {
                 Parent = RightColumn, SortOrder = Enum.SortOrder.LayoutOrder,
-                Padding = UDim.new(0, 8),
+                Padding = UDim.new(0, 10),
             })
 
             local function updateCanvas()
@@ -695,19 +680,17 @@ local function AttachWindowMethods(Window)
             end
 
             -- ============================================
-            -- CreateSection
-            -- (секции раскидываются по колонкам попеременно)
+            -- CreateSection (как в ZyronX)
             -- ============================================
             function PageObj:CreateSection(sectionName)
                 sectionName = sectionName or "Section"
-                -- чередуем колонки
                 local targetCol = (PageObj._side == "left") and LeftColumn or RightColumn
                 PageObj._side = (PageObj._side == "left") and "right" or "left"
 
                 local SectionContainer = Create("Frame", {
                     Parent = targetCol,
                     BackgroundColor3 = CardColor,
-                    Size = UDim2.new(1, 0, 0, 30),
+                    Size = UDim2.new(1, 0, 0, 32),
                     AutomaticSize = Enum.AutomaticSize.Y,
                     ClipsDescendants = true,
                     BorderSizePixel = 0, ZIndex = 8,
@@ -718,12 +701,26 @@ local function AttachWindowMethods(Window)
                     Thickness = 1, Transparency = 0.5,
                 })
 
+                -- Заголовок секции (как в ZyronX)
+                local TitleRow = Create("Frame", {
+                    Parent = SectionContainer, BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 32),
+                    ZIndex = 9,
+                })
+                -- цветная полоска слева от заголовка
+                Create("Frame", {
+                    Parent = TitleRow, BackgroundColor3 = AccentColor,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(0, 3, 0, 14),
+                    Position = UDim2.new(0, 10, 0.5, -7),
+                    ZIndex = 10,
+                })
                 Create("TextLabel", {
-                    Parent = SectionContainer, Text = sectionName,
-                    Font = Enum.Font.GothamBold, TextSize = 12,
-                    TextColor3 = AccentColorLight, BackgroundTransparency = 1,
-                    Size = UDim2.new(1, -20, 0, 28),
-                    Position = UDim2.new(0, 12, 0, 0),
+                    Parent = TitleRow, Text = sectionName,
+                    Font = Enum.Font.GothamBold, TextSize = 13,
+                    TextColor3 = TextColor, BackgroundTransparency = 1,
+                    Size = UDim2.new(1, -30, 1, 0),
+                    Position = UDim2.new(0, 20, 0, 0),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     ZIndex = 9,
                 })
@@ -731,33 +728,30 @@ local function AttachWindowMethods(Window)
                 local ItemContainer = Create("Frame", {
                     Parent = SectionContainer, BackgroundTransparency = 1,
                     Size = UDim2.new(1, 0, 0, 0),
-                    Position = UDim2.new(0, 0, 0, 28),
+                    Position = UDim2.new(0, 0, 0, 32),
                     AutomaticSize = Enum.AutomaticSize.Y,
                     ZIndex = 9,
                 })
                 Create("UIPadding", {
                     Parent = ItemContainer,
-                    PaddingTop = UDim.new(0, 6),
-                    PaddingBottom = UDim.new(0, 10),
-                    PaddingLeft = UDim.new(0, 10),
-                    PaddingRight = UDim.new(0, 10),
+                    PaddingTop = UDim.new(0, 8),
+                    PaddingBottom = UDim.new(0, 12),
+                    PaddingLeft = UDim.new(0, 12),
+                    PaddingRight = UDim.new(0, 12),
                 })
                 Create("UIListLayout", {
                     Parent = ItemContainer,
                     SortOrder = Enum.SortOrder.LayoutOrder,
-                    Padding = UDim.new(0, 8),
+                    Padding = UDim.new(0, 10),
                 })
 
                 local Elements = {}
 
-                -- ========================================
                 -- Divider
-                -- ========================================
                 function Elements:AddDivider()
                     local Wrap = Create("Frame", {
                         Parent = ItemContainer, BackgroundTransparency = 1,
-                        Size = UDim2.new(1, 0, 0, 9),
-                        ZIndex = 9,
+                        Size = UDim2.new(1, 0, 0, 9), ZIndex = 9,
                     })
                     Create("Frame", {
                         Parent = Wrap, BackgroundColor3 = StrokeColor,
@@ -769,9 +763,36 @@ local function AttachWindowMethods(Window)
                     return Wrap
                 end
 
-                -- ========================================
+                -- Divider с текстом (как в ZyronX)
+                function Elements:AddDividerText(text)
+                    local Wrap = Create("Frame", {
+                        Parent = ItemContainer, BackgroundTransparency = 1,
+                        Size = UDim2.new(1, 0, 0, 20), ZIndex = 9,
+                    })
+                    Create("Frame", {
+                        Parent = Wrap, BackgroundColor3 = StrokeColor,
+                        BorderSizePixel = 0,
+                        Size = UDim2.new(0.4, 0, 0, 1),
+                        Position = UDim2.new(0, 0, 0.5, 0), ZIndex = 9,
+                    })
+                    Create("Frame", {
+                        Parent = Wrap, BackgroundColor3 = StrokeColor,
+                        BorderSizePixel = 0,
+                        Size = UDim2.new(0.4, 0, 0, 1),
+                        Position = UDim2.new(0.6, 0, 0.5, 0), ZIndex = 9,
+                    })
+                    Create("TextLabel", {
+                        Parent = Wrap, Text = text or "",
+                        Font = Enum.Font.GothamBold, TextSize = 11,
+                        TextColor3 = SubTextColor, BackgroundTransparency = 1,
+                        Size = UDim2.new(0.2, 0, 1, 0),
+                        Position = UDim2.new(0.4, 0, 0, 0),
+                        TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 10,
+                    })
+                    return Wrap
+                end
+
                 -- Label
-                -- ========================================
                 function Elements:AddLabel(text, color)
                     return Create("TextLabel", {
                         Parent = ItemContainer, Text = text or "",
@@ -780,14 +801,11 @@ local function AttachWindowMethods(Window)
                         BackgroundTransparency = 1,
                         Size = UDim2.new(1, 0, 0, 22),
                         TextXAlignment = Enum.TextXAlignment.Left,
-                        TextWrapped = true,
-                        ZIndex = 9,
+                        TextWrapped = true, ZIndex = 9,
                     })
                 end
 
-                -- ========================================
-                -- Paragraph (карточка с текстом)
-                -- ========================================
+                -- Paragraph
                 function Elements:AddParagraph(title, content)
                     local Card = Create("Frame", {
                         Parent = ItemContainer, BackgroundColor3 = BackgroundColor,
@@ -805,13 +823,12 @@ local function AttachWindowMethods(Window)
                         PaddingTop = UDim.new(0, 10),
                         PaddingBottom = UDim.new(0, 10),
                         PaddingLeft = UDim.new(0, 12),
-                        PaddingRight = UDim.new(0, 12),
+                        PaddingRight = UDim2.new(0, 12),
                     })
                     Create("UIListLayout", {
                         Parent = Card, SortOrder = Enum.SortOrder.LayoutOrder,
                         Padding = UDim.new(0, 4),
                     })
-
                     if title then
                         Create("TextLabel", {
                             Parent = Card, Text = title,
@@ -835,7 +852,6 @@ local function AttachWindowMethods(Window)
                     return Card
                 end
 
-                -- Ссылки для Частей 3-5
                 Elements._ItemContainer = ItemContainer
                 Elements._PageObj = PageObj
                 Elements._TabConfig = TabConfig
@@ -847,7 +863,7 @@ local function AttachWindowMethods(Window)
 
         if isDefault then
             TabBtn.BackgroundTransparency = 0.15
-            Indicator.Size = UDim2.new(0, 3, 0, 18)
+            Indicator.Size = UDim2.new(0, 3, 0, 20)
             Txt.TextColor3 = TextColor
             TabContent.Visible = true
             Window.CurrentTab = TabConfig
@@ -866,7 +882,7 @@ function Library:CreateWindow(opts)
     AttachWindowMethods(w)
     return w
 end-- ============================================================
--- БАЗОВЫЕ КОМПОНЕНТЫ
+-- БАЗОВЫЕ КОМПОНЕНТЫ (ZX-стиль)
 -- ============================================================
 local function AttachBasicComponents(Elements)
     local ItemContainer = Elements._ItemContainer
@@ -926,7 +942,6 @@ local function AttachBasicComponents(Elements)
             Position = UDim2.new(0, 2, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10,
         })
-
         local Lever = Create("TextButton", {
             Parent = Frame, Text = "",
             BackgroundColor3 = state and AccentColor or Color3.fromRGB(45, 50, 60),
@@ -936,7 +951,6 @@ local function AttachBasicComponents(Elements)
         })
         Create("UICorner", {Parent = Lever, CornerRadius = UDim.new(1, 0)})
         AddBounce(Lever)
-
         local Knob = Create("Frame", {
             Parent = Lever, BackgroundColor3 = Color3.fromRGB(255, 255, 255),
             Size = UDim2.new(0, 16, 0, 16),
@@ -945,7 +959,6 @@ local function AttachBasicComponents(Elements)
             BorderSizePixel = 0, ZIndex = 11,
         })
         Create("UICorner", {Parent = Knob, CornerRadius = UDim.new(1, 0)})
-
         local function apply()
             Tween(Lever, {
                 BackgroundColor3 = state and AccentColor or Color3.fromRGB(45, 50, 60),
@@ -956,17 +969,12 @@ local function AttachBasicComponents(Elements)
             }, 0.2)
         end
         apply()
-
         local function internalSet(val, fire)
             state = val and true or false
             apply()
             if fire ~= false and callback then pcall(callback, state) end
         end
-
-        Lever.MouseButton1Click:Connect(function()
-            internalSet(not state, true)
-        end)
-
+        Lever.MouseButton1Click:Connect(function() internalSet(not state, true) end)
         Window.ConfigElements[name] = {
             Set = function(v) internalSet(v, false) end,
             Get = function() return state end,
@@ -978,10 +986,8 @@ local function AttachBasicComponents(Elements)
     -- AddSlider
     -- ========================================================
     function Elements:AddSlider(name, min, max, default, callback)
-        min = min or 0
-        max = max or 100
+        min = min or 0; max = max or 100
         local val = math.clamp(default or min, min, max)
-
         local Frame = Create("Frame", {
             Parent = ItemContainer, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 46), ZIndex = 10,
@@ -1002,7 +1008,6 @@ local function AttachBasicComponents(Elements)
             Position = UDim2.new(1, -46, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 10,
         })
-
         local Track = Create("Frame", {
             Parent = Frame, BackgroundColor3 = Color3.fromRGB(40, 46, 56),
             Size = UDim2.new(1, 0, 0, 6),
@@ -1010,7 +1015,6 @@ local function AttachBasicComponents(Elements)
             BorderSizePixel = 0, ZIndex = 10,
         })
         Create("UICorner", {Parent = Track, CornerRadius = UDim.new(1, 0)})
-
         local alpha = (max - min > 0) and (val - min) / (max - min) or 0
         local Fill = Create("Frame", {
             Parent = Track, BackgroundColor3 = AccentColor,
@@ -1018,7 +1022,6 @@ local function AttachBasicComponents(Elements)
             BorderSizePixel = 0, ZIndex = 11,
         })
         Create("UICorner", {Parent = Fill, CornerRadius = UDim.new(1, 0)})
-
         local Knob = Create("Frame", {
             Parent = Fill, BackgroundColor3 = Color3.fromRGB(255, 255, 255),
             Size = UDim2.new(0, 14, 0, 14),
@@ -1026,7 +1029,6 @@ local function AttachBasicComponents(Elements)
             BorderSizePixel = 0, ZIndex = 12,
         })
         Create("UICorner", {Parent = Knob, CornerRadius = UDim.new(1, 0)})
-
         local function internalSet(v, fire)
             val = math.clamp(v, min, max)
             ValTxt.Text = tostring(math.floor(val))
@@ -1034,7 +1036,6 @@ local function AttachBasicComponents(Elements)
             Tween(Fill, {Size = UDim2.new(a, 0, 1, 0)}, 0.08)
             if fire ~= false and callback then pcall(callback, val) end
         end
-
         local Hit = Create("TextButton", {
             Parent = Frame, Text = "",
             BackgroundTransparency = 1,
@@ -1042,20 +1043,16 @@ local function AttachBasicComponents(Elements)
             Position = UDim2.new(0, 0, 0, 17),
             AutoButtonColor = false, ZIndex = 13,
         })
-
         local dragging = false
         local function update(input)
             local rel = math.clamp(
-                (input.Position.X - Track.AbsolutePosition.X) / Track.AbsoluteSize.X,
-                0, 1)
+                (input.Position.X - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1)
             internalSet(min + (max - min) * rel, true)
         end
-
         Hit.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1
                 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                update(input)
+                dragging = true; update(input)
             end
         end)
         UserInputService.InputEnded:Connect(function(input)
@@ -1070,7 +1067,6 @@ local function AttachBasicComponents(Elements)
                 update(input)
             end
         end)
-
         Window.ConfigElements[name] = {
             Set = function(v) internalSet(v, false) end,
             Get = function() return val end,
@@ -1102,7 +1098,6 @@ local function AttachBasicComponents(Elements)
             Position = UDim2.new(0, 2, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10,
         })
-
         local MainBtn = Create("TextButton", {
             Parent = Wrapper,
             Text = isMulti and "Выбрать..." or (selected or "Выбрать..."),
@@ -1119,16 +1114,13 @@ local function AttachBasicComponents(Elements)
             Parent = MainBtn, Color = StrokeColor, Thickness = 1, Transparency = 0.6,
         })
         AddBounce(MainBtn, 0.98)
-
         local Arrow = Create("TextLabel", {
             Parent = MainBtn, Text = "▼",
             Font = Enum.Font.GothamBold, TextSize = 10,
             TextColor3 = SubTextColor, BackgroundTransparency = 1,
             Size = UDim2.new(0, 16, 1, 0),
-            Position = UDim2.new(1, -22, 0, 0),
-            ZIndex = 11,
+            Position = UDim2.new(1, -22, 0, 0), ZIndex = 11,
         })
-
         local ListFrame = Create("ScrollingFrame", {
             Parent = Wrapper, BackgroundColor3 = BackgroundColor,
             Size = UDim2.new(1, 0, 0, 0),
@@ -1139,9 +1131,7 @@ local function AttachBasicComponents(Elements)
             BorderSizePixel = 0, Visible = false, ZIndex = 11,
         })
         Create("UICorner", {Parent = ListFrame, CornerRadius = UDim.new(0, 8)})
-        Create("UIListLayout", {
-            Parent = ListFrame, SortOrder = Enum.SortOrder.LayoutOrder,
-        })
+        Create("UIListLayout", {Parent = ListFrame, SortOrder = Enum.SortOrder.LayoutOrder})
 
         local function updateText()
             if isMulti then
@@ -1152,12 +1142,10 @@ local function AttachBasicComponents(Elements)
                 MainBtn.Text = selected or "Выбрать..."
             end
         end
-
         local function isSelected(opt)
             if isMulti then return table.find(selected, opt) ~= nil end
             return selected == opt
         end
-
         for i, opt in ipairs(options) do
             local OptBtn = Create("TextButton", {
                 Parent = ListFrame, Text = "  " .. tostring(opt),
@@ -1170,7 +1158,6 @@ local function AttachBasicComponents(Elements)
                 LayoutOrder = i, ZIndex = 12,
             })
             table.insert(optionButtons, OptBtn)
-
             OptBtn.MouseButton1Click:Connect(function()
                 if isMulti then
                     local idx = table.find(selected, opt)
@@ -1185,15 +1172,12 @@ local function AttachBasicComponents(Elements)
                 end
                 for _, b in ipairs(optionButtons) do
                     local txt = b.Text:gsub("^%s+", "")
-                    Tween(b, {
-                        TextColor3 = isSelected(txt) and AccentColor or SubTextColor,
-                    }, 0.15)
+                    Tween(b, {TextColor3 = isSelected(txt) and AccentColor or SubTextColor}, 0.15)
                 end
                 updateText()
                 if callback then pcall(callback, selected) end
             end)
         end
-
         MainBtn.MouseButton1Click:Connect(function()
             dropped = not dropped
             if dropped then
@@ -1208,15 +1192,12 @@ local function AttachBasicComponents(Elements)
                 end)
             end
         end)
-
         Window.ConfigElements[name] = {
             Set = function(v)
                 selected = v
                 for _, b in ipairs(optionButtons) do
                     local txt = b.Text:gsub("^%s+", "")
-                    Tween(b, {
-                        TextColor3 = isSelected(txt) and AccentColor or SubTextColor,
-                    }, 0.15)
+                    Tween(b, {TextColor3 = isSelected(txt) and AccentColor or SubTextColor}, 0.15)
                 end
                 updateText()
             end,
@@ -1259,11 +1240,9 @@ local function AttachBasicComponents(Elements)
         Create("UIStroke", {
             Parent = Input, Color = StrokeColor, Thickness = 1, Transparency = 0.6,
         })
-
         Input.FocusLost:Connect(function()
             if callback then pcall(callback, Input.Text) end
         end)
-
         Window.ConfigElements[name] = {
             Set = function(v) Input.Text = tostring(v) end,
             Get = function() return Input.Text end,
@@ -1311,11 +1290,9 @@ local function AttachBasicComponents(Elements)
         Create("UIStroke", {
             Parent = Input, Color = StrokeColor, Thickness = 1, Transparency = 0.6,
         })
-
         Input.FocusLost:Connect(function()
             if callback then pcall(callback, Input.Text) end
         end)
-
         Window.ConfigElements[name] = {
             Set = function(v) Input.Text = tostring(v) end,
             Get = function() return Input.Text end,
@@ -1324,7 +1301,7 @@ local function AttachBasicComponents(Elements)
                 Get = function() return Input.Text end}
     end
 end-- ============================================================
--- ПРОДВИНУТЫЕ КОМПОНЕНТЫ
+-- ПРОДВИНУТЫЕ КОМПОНЕНТЫ (ZX-стиль)
 -- ============================================================
 local function AttachAdvancedComponents(Elements)
     local ItemContainer = Elements._ItemContainer
@@ -1335,7 +1312,6 @@ local function AttachAdvancedComponents(Elements)
     function Elements:AddKeybind(name, defaultKey, callback)
         local currentKey = defaultKey or Enum.KeyCode.RightShift
         local listening = false
-
         local Frame = Create("Frame", {
             Parent = ItemContainer, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 34), ZIndex = 10,
@@ -1362,7 +1338,6 @@ local function AttachAdvancedComponents(Elements)
             Parent = KeyBtn, Color = StrokeColor, Thickness = 1, Transparency = 0.6,
         })
         AddBounce(KeyBtn)
-
         local listenConn
         local function stopListen()
             listening = false
@@ -1374,7 +1349,7 @@ local function AttachAdvancedComponents(Elements)
             if listening then stopListen(); return end
             listening = true
             KeyBtn.Text = "..."
-            Tween(KeyBtn, {TextColor3 = Color3.fromRGB(255, 200, 90)}, 0.2)
+            Tween(KeyBtn, {TextColor3 = WarningColor}, 0.2)
             listenConn = UserInputService.InputBegan:Connect(function(input)
                 if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
                 if input.KeyCode == Enum.KeyCode.Escape then stopListen(); return end
@@ -1384,7 +1359,6 @@ local function AttachAdvancedComponents(Elements)
             end)
         end
         KeyBtn.MouseButton1Click:Connect(startListen)
-
         Window.ConfigElements[name] = {
             Set = function(kc)
                 if typeof(kc) == "EnumItem" then currentKey = kc
@@ -1404,10 +1378,8 @@ local function AttachAdvancedComponents(Elements)
     -- AddProgressBar
     -- ========================================================
     function Elements:AddProgressBar(name, min, max)
-        min = min or 0
-        max = max or 100
+        min = min or 0; max = max or 100
         local val = min
-
         local Frame = Create("Frame", {
             Parent = ItemContainer, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 46), ZIndex = 10,
@@ -1441,7 +1413,6 @@ local function AttachAdvancedComponents(Elements)
             BorderSizePixel = 0, ZIndex = 11,
         })
         Create("UICorner", {Parent = Fill, CornerRadius = UDim.new(1, 0)})
-
         local obj = {Instance = Frame}
         function obj:Set(v)
             val = math.clamp(v, min, max)
@@ -1450,7 +1421,6 @@ local function AttachAdvancedComponents(Elements)
             ValTxt.Text = string.format("%d%%", math.floor(a * 100))
         end
         function obj:Get() return val end
-
         Window.ConfigElements[name] = {
             Set = function(v) obj:Set(v) end,
             Get = function() return val end,
@@ -1462,10 +1432,8 @@ local function AttachAdvancedComponents(Elements)
     -- AddStepper
     -- ========================================================
     function Elements:AddStepper(name, min, max, default, callback)
-        min = min or 0
-        max = max or 10
+        min = min or 0; max = max or 10
         local val = math.clamp(default or min, min, max)
-
         local Frame = Create("Frame", {
             Parent = ItemContainer, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 34), ZIndex = 10,
@@ -1506,7 +1474,6 @@ local function AttachAdvancedComponents(Elements)
         })
         Create("UICorner", {Parent = Plus, CornerRadius = UDim.new(0, 6)})
         AddBounce(Plus)
-
         local function internalSet(v, fire)
             val = math.clamp(v, min, max)
             ValLbl.Text = tostring(val)
@@ -1514,7 +1481,6 @@ local function AttachAdvancedComponents(Elements)
         end
         Minus.MouseButton1Click:Connect(function() internalSet(val - 1, true) end)
         Plus.MouseButton1Click:Connect(function() internalSet(val + 1, true) end)
-
         Window.ConfigElements[name] = {
             Set = function(v) internalSet(v, false) end,
             Get = function() return val end,
@@ -1528,7 +1494,6 @@ local function AttachAdvancedComponents(Elements)
     function Elements:AddRadioGroup(name, options, default, callback)
         options = options or {}
         local current = default or options[1]
-
         local Wrapper = Create("Frame", {
             Parent = ItemContainer, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 62), ZIndex = 10,
@@ -1550,7 +1515,6 @@ local function AttachAdvancedComponents(Elements)
             Parent = Row, FillDirection = Enum.FillDirection.Horizontal,
             Padding = UDim.new(0, 6),
         })
-
         local buttons = {}
         local function update()
             for _, data in ipairs(buttons) do
@@ -1575,14 +1539,12 @@ local function AttachAdvancedComponents(Elements)
             })
             AddBounce(Btn)
             Btn.MouseButton1Click:Connect(function()
-                current = opt
-                update()
+                current = opt; update()
                 if callback then pcall(callback, current) end
             end)
             table.insert(buttons, {Name = opt, Btn = Btn})
         end
         update()
-
         Window.ConfigElements[name] = {
             Set = function(v) current = v; update() end,
             Get = function() return current end,
@@ -1598,7 +1560,6 @@ local function AttachAdvancedComponents(Elements)
         local color = defaultColor or AccentColor
         local h, s, v = Color3.toHSV(color)
         local dropped = false
-
         local Wrapper = Create("Frame", {
             Parent = ItemContainer, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 30),
@@ -1625,18 +1586,15 @@ local function AttachAdvancedComponents(Elements)
             Transparency = 0.7, Thickness = 1,
         })
         AddBounce(Preview)
-
         local PickerArea = Create("Frame", {
             Parent = Wrapper, BackgroundColor3 = BackgroundColor,
             Size = UDim2.new(1, 0, 0, 130),
-            Position = UDim2.new(0, 0, 0, 34),
-            ZIndex = 10,
+            Position = UDim2.new(0, 0, 0, 34), ZIndex = 10,
         })
         Create("UICorner", {Parent = PickerArea, CornerRadius = UDim.new(0, 8)})
         Create("UIStroke", {
             Parent = PickerArea, Color = StrokeColor, Thickness = 1, Transparency = 0.6,
         })
-
         local SVMap = Create("TextButton", {
             Parent = PickerArea, Text = "",
             BackgroundColor3 = Color3.fromHSV(h, 1, 1),
@@ -1645,7 +1603,6 @@ local function AttachAdvancedComponents(Elements)
             AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 11,
         })
         Create("UICorner", {Parent = SVMap, CornerRadius = UDim.new(0, 6)})
-
         local WhiteGrad = Create("Frame", {
             Parent = SVMap, BackgroundColor3 = Color3.new(1,1,1),
             Size = UDim2.new(1,0,1,0), BorderSizePixel = 0, ZIndex = 12,
@@ -1658,7 +1615,6 @@ local function AttachAdvancedComponents(Elements)
             }),
         })
         Create("UICorner", {Parent = WhiteGrad, CornerRadius = UDim.new(0, 6)})
-
         local BlackGrad = Create("Frame", {
             Parent = SVMap, BackgroundColor3 = Color3.new(0,0,0),
             Size = UDim2.new(1,0,1,0), BorderSizePixel = 0, ZIndex = 13,
@@ -1671,7 +1627,6 @@ local function AttachAdvancedComponents(Elements)
             }),
         })
         Create("UICorner", {Parent = BlackGrad, CornerRadius = UDim.new(0, 6)})
-
         local SVRing = Create("Frame", {
             Parent = SVMap, BackgroundColor3 = Color3.new(1,1,1),
             Size = UDim2.new(0, 10, 0, 10),
@@ -1680,10 +1635,7 @@ local function AttachAdvancedComponents(Elements)
             BorderSizePixel = 0, ZIndex = 14,
         })
         Create("UICorner", {Parent = SVRing, CornerRadius = UDim.new(1, 0)})
-        Create("UIStroke", {
-            Parent = SVRing, Color = Color3.new(0,0,0), Thickness = 1,
-        })
-
+        Create("UIStroke", {Parent = SVRing, Color = Color3.new(0,0,0), Thickness = 1})
         local HueBar = Create("TextButton", {
             Parent = PickerArea, Text = "",
             BackgroundColor3 = Color3.new(1,1,1),
@@ -1716,14 +1668,12 @@ local function AttachAdvancedComponents(Elements)
             Parent = HueRing, Color = Color3.new(0,0,0),
             Thickness = 1, Transparency = 0.4,
         })
-
         local function updateColor(fire)
             color = Color3.fromHSV(h, s, v)
             Preview.BackgroundColor3 = color
             SVMap.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
             if fire ~= false and callback then pcall(callback, color) end
         end
-
         local dragSV, dragHue = false, false
         SVMap.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -1764,16 +1714,11 @@ local function AttachAdvancedComponents(Elements)
                 end
             end
         end)
-
         Preview.MouseButton1Click:Connect(function()
             dropped = not dropped
-            Tween(Wrapper, {
-                Size = UDim2.new(1, 0, 0, dropped and 170 or 30),
-            }, 0.25)
+            Tween(Wrapper, {Size = UDim2.new(1, 0, 0, dropped and 170 or 30)}, 0.25)
         end)
-
         updateColor(false)
-
         Window.ConfigElements[name] = {
             Set = function(hexOrColor)
                 if typeof(hexOrColor) == "Color3" then
@@ -1838,7 +1783,6 @@ local function AttachAdvancedComponents(Elements)
             BorderSizePixel = 0, ZIndex = 11,
         })
         Create("UICorner", {Parent = RingHole, CornerRadius = UDim.new(1, 0)})
-
         task.spawn(function()
             while Ring.Parent do
                 Ring.Rotation = (Ring.Rotation + 6) % 360
@@ -1848,7 +1792,7 @@ local function AttachAdvancedComponents(Elements)
         return Frame
     end
 end-- ============================================================
--- CONFIG MANAGER
+-- CONFIG MANAGER (ZX-стиль)
 -- ============================================================
 local function AttachConfigManager(Elements)
     local ItemContainer = Elements._ItemContainer
@@ -1859,7 +1803,7 @@ local function AttachConfigManager(Elements)
 
         local ManagerFrame = Create("Frame", {
             Parent = ItemContainer, BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 250), ZIndex = 10,
+            Size = UDim2.new(1, 0, 0, 260), ZIndex = 10,
         })
 
         local Search = Create("TextBox", {
@@ -1881,7 +1825,7 @@ local function AttachConfigManager(Elements)
 
         local Monitor = Create("ScrollingFrame", {
             Parent = ManagerFrame, BackgroundColor3 = BackgroundColor,
-            Size = UDim2.new(1, 0, 0, 110),
+            Size = UDim2.new(1, 0, 0, 115),
             Position = UDim2.new(0, 0, 0, 38),
             ScrollBarThickness = 3,
             ScrollBarImageColor3 = StrokeColor,
@@ -1912,8 +1856,8 @@ local function AttachConfigManager(Elements)
 
         local Controls = Create("Frame", {
             Parent = ManagerFrame, BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 90),
-            Position = UDim2.new(0, 0, 0, 155), ZIndex = 10,
+            Size = UDim2.new(1, 0, 0, 100),
+            Position = UDim2.new(0, 0, 0, 160), ZIndex = 10,
         })
 
         local NameBox = Create("TextBox", {
@@ -1922,7 +1866,7 @@ local function AttachConfigManager(Elements)
             Font = Enum.Font.Gotham, TextSize = 12,
             TextColor3 = TextColor, BackgroundColor3 = ItemColor,
             PlaceholderColor3 = SubTextColor,
-            Size = UDim2.new(1, 0, 0, 28),
+            Size = UDim2.new(1, 0, 0, 30),
             Position = UDim2.new(0, 0, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Left,
             ClearTextOnFocus = false, BorderSizePixel = 0, ZIndex = 10,
@@ -1938,8 +1882,8 @@ local function AttachConfigManager(Elements)
             Font = Enum.Font.GothamBold, TextSize = 12,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             BackgroundColor3 = AccentColor,
-            Size = UDim2.new(0.5, -4, 0, 28),
-            Position = UDim2.new(0, 0, 0, 36),
+            Size = UDim2.new(0.5, -4, 0, 30),
+            Position = UDim2.new(0, 0, 0, 40),
             AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 10,
         })
         Create("UICorner", {Parent = CreateBtn, CornerRadius = UDim.new(0, 8)})
@@ -1949,8 +1893,8 @@ local function AttachConfigManager(Elements)
             Parent = Controls, Text = "Удаление: ВЫКЛ",
             Font = Enum.Font.GothamBold, TextSize = 12,
             TextColor3 = TextColor, BackgroundColor3 = ItemColor,
-            Size = UDim2.new(0.5, -4, 0, 28),
-            Position = UDim2.new(0.5, 4, 0, 36),
+            Size = UDim2.new(0.5, -4, 0, 30),
+            Position = UDim2.new(0.5, 4, 0, 40),
             AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 10,
         })
         Create("UICorner", {Parent = DeleteTogBtn, CornerRadius = UDim.new(0, 8)})
@@ -1958,8 +1902,8 @@ local function AttachConfigManager(Elements)
 
         local ActionArea = Create("Frame", {
             Parent = Controls, BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 28),
-            Position = UDim2.new(0, 0, 0, 36),
+            Size = UDim2.new(1, 0, 0, 30),
+            Position = UDim2.new(0, 0, 0, 40),
             Visible = false, ZIndex = 10,
         })
         local ConfirmActionBtn = Create("TextButton", {
@@ -1984,7 +1928,7 @@ local function AttachConfigManager(Elements)
         Create("UICorner", {Parent = CancelActionBtn, CornerRadius = UDim.new(0, 8)})
         AddBounce(CancelActionBtn)
 
-        -- Всплывающее подтверждение удаления
+        -- Всплывающее подтверждение
         local ConfirmPopup = Create("Frame", {
             Parent = ManagerFrame, BackgroundColor3 = BackgroundColor,
             Size = UDim2.new(1, -20, 1, -20),
@@ -2059,7 +2003,6 @@ local function AttachConfigManager(Elements)
             ConfirmPopup.Visible = false
         end
 
-        -- Обновление списка
         local function refreshMonitor()
             for _, v in ipairs(Monitor:GetChildren()) do
                 if v:IsA("Frame") then v:Destroy() end
@@ -2073,7 +2016,7 @@ local function AttachConfigManager(Elements)
                     local display = rawName:gsub("_%d+$", ""):gsub("_%d+%.%d+$", "")
                     local Row = Create("Frame", {
                         Parent = Monitor, BackgroundColor3 = ItemColor,
-                        Size = UDim2.new(1, 0, 0, 32),
+                        Size = UDim2.new(1, 0, 0, 34),
                         BorderSizePixel = 0, ZIndex = 11,
                     })
                     Create("UICorner", {Parent = Row, CornerRadius = UDim.new(0, 8)})
@@ -2081,7 +2024,7 @@ local function AttachConfigManager(Elements)
                         Parent = Row, Text = display,
                         Font = Enum.Font.Gotham, TextSize = 12,
                         TextColor3 = TextColor, BackgroundTransparency = 1,
-                        Size = UDim2.new(1, -76, 1, 0),
+                        Size = UDim2.new(1, -80, 1, 0),
                         Position = UDim2.new(0, 10, 0, 0),
                         TextXAlignment = Enum.TextXAlignment.Left,
                         TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 11,
@@ -2091,8 +2034,8 @@ local function AttachConfigManager(Elements)
                         Font = Enum.Font.GothamBold, TextSize = 10,
                         TextColor3 = Color3.fromRGB(255,255,255),
                         BackgroundColor3 = SuccessColor,
-                        Size = UDim2.new(0, 34, 0, 22),
-                        Position = UDim2.new(1, -72, 0.5, -11),
+                        Size = UDim2.new(0, 34, 0, 24),
+                        Position = UDim2.new(1, -74, 0.5, -12),
                         AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 11,
                     })
                     Create("UICorner", {Parent = LoadBtn, CornerRadius = UDim.new(0, 6)})
@@ -2102,8 +2045,8 @@ local function AttachConfigManager(Elements)
                         Font = Enum.Font.GothamBold, TextSize = 10,
                         TextColor3 = Color3.fromRGB(255,255,255),
                         BackgroundColor3 = Color3.fromRGB(180, 120, 50),
-                        Size = UDim2.new(0, 34, 0, 22),
-                        Position = UDim2.new(1, -36, 0.5, -11),
+                        Size = UDim2.new(0, 34, 0, 24),
+                        Position = UDim2.new(1, -38, 0.5, -12),
                         AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 11,
                     })
                     Create("UICorner", {Parent = EditBtn, CornerRadius = UDim.new(0, 6)})
@@ -2112,7 +2055,7 @@ local function AttachConfigManager(Elements)
                     local SelectionMask = Create("TextButton", {
                         Parent = Row, Text = "",
                         BackgroundTransparency = 1,
-                        Size = UDim2.new(1, -80, 1, 0),
+                        Size = UDim2.new(1, -84, 1, 0),
                         ZIndex = 12, AutoButtonColor = false,
                     })
                     SelectionMask.MouseButton1Click:Connect(function()
@@ -2159,7 +2102,6 @@ local function AttachConfigManager(Elements)
             end
         end
 
-        -- Сохранение
         local function executeSave(saveName)
             local payload = {}
             for k, el in pairs(Window.ConfigElements) do
