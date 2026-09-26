@@ -1,8 +1,7 @@
 --[[
-    Sensei UI Library — Mobile Edition
-    Rewritten from ZyronX architecture
+    Sensei UI Library — Compact Mobile Edition
     Author: CreativeGPT & Douwe
-    Version: 2.0.0
+    Version: 1.0.0
     Style: Blue Neon, phone-optimized, Delta-style minibar
     Load: local Sensei = loadstring(game:HttpGet("https://raw.githubusercontent.com/glitchmode960-gif/library/main/library.lua"))()
 ]]
@@ -17,7 +16,9 @@ local Players          = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local Library = {
-    WhitelistedUsers = {}
+    WhitelistedUsers = {},
+    Version = "1.0.0",
+    Brand   = "Sensei",
 }
 
 -- ============================================================
@@ -30,24 +31,18 @@ local _readfile  = readfile  or function() return "{}" end
 local _listfiles = listfiles or function() return {} end
 local _delfile   = delfile   or function() warn("[Sensei] delfile not supported.") end
 
-local function SafeCopy(text)
-    if setclipboard then setclipboard(text)
-    elseif toclipboard then toclipboard(text)
-    else warn("[Sensei] Clipboard not supported.") end
-end
-
 -- ============================================================
 -- Palette (Blue Neon)
 -- ============================================================
-local AccentColor       = Color3.fromRGB(0, 170, 255)
-local AccentColorLight  = Color3.fromRGB(120, 220, 255)
-local BackgroundColor   = Color3.fromRGB(15, 18, 24)
-local CardColor         = Color3.fromRGB(24, 28, 36)
-local ItemColor         = Color3.fromRGB(34, 40, 50)
-local HoverColor        = Color3.fromRGB(44, 52, 64)
-local TextColor         = Color3.fromRGB(235, 240, 248)
-local SubTextColor      = Color3.fromRGB(150, 165, 185)
-local StrokeColor       = Color3.fromRGB(40, 60, 90)
+local AccentColor      = Color3.fromRGB(0, 170, 255)
+local AccentColorLight = Color3.fromRGB(120, 220, 255)
+local BackgroundColor  = Color3.fromRGB(15, 18, 24)
+local CardColor        = Color3.fromRGB(24, 28, 36)
+local ItemColor        = Color3.fromRGB(34, 40, 50)
+local HoverColor       = Color3.fromRGB(44, 52, 64)
+local TextColor        = Color3.fromRGB(235, 240, 248)
+local SubTextColor     = Color3.fromRGB(150, 165, 185)
+local StrokeColor      = Color3.fromRGB(40, 60, 90)
 
 -- ============================================================
 -- Utility: Create instance
@@ -58,7 +53,6 @@ local function Create(className, props)
     for k, v in pairs(props or {}) do
         inst[k] = v
     end
-    -- Автоматический TextScaled для длинных текстов
     if className == "TextLabel" or className == "TextButton" or className == "TextBox" then
         if props and props.TextSize and not props.RichText then
             inst.TextScaled = true
@@ -83,7 +77,7 @@ local function Tween(instance, properties, duration)
 end
 
 -- ============================================================
--- Utility: Bounce (микро-анимация нажатия)
+-- Utility: Bounce
 -- ============================================================
 local function AddBounce(button, scaleFactor)
     scaleFactor = scaleFactor or 0.96
@@ -197,22 +191,20 @@ function Library:Notify(options)
         task.wait(0.4)
         Notif:Destroy()
     end)
-end-- ============================================================
+end
+
+-- ============================================================
 -- CREATE WINDOW
 -- ============================================================
 function Library:CreateWindow(options)
     local hubName  = "Sensei"
     local subText  = "Mobile Edition"
     local subColor = AccentColorLight
-    local topbarLogo = nil
-    local logoSize = 26
 
     if type(options) == "table" then
-        hubName    = options.Title or hubName
-        subText    = options.Subtitle or subText
-        subColor   = options.SubtitleColor or subColor
-        topbarLogo = options.Logo
-        logoSize   = options.LogoSize or 26
+        hubName  = options.Title or hubName
+        subText  = options.Subtitle or subText
+        subColor = options.SubtitleColor or subColor
     elseif type(options) == "string" then
         hubName = options
     end
@@ -228,7 +220,7 @@ function Library:CreateWindow(options)
     })
     if syn and syn.protect_gui then pcall(function() syn.protect_gui(ScreenGui) end) end
 
-    -- Notifications container (справа сверху)
+    -- Notifications container
     local NotifContainer = Create("Frame", {
         Parent = ScreenGui,
         BackgroundTransparency = 1,
@@ -246,9 +238,7 @@ function Library:CreateWindow(options)
     })
     GlobalNotifContainer = NotifContainer
 
-    -- ========================================================
-    -- Main Frame (mobile-optimized)
-    -- ========================================================
+    -- Main Frame
     local MainFrame = Create("Frame", {
         Parent = ScreenGui,
         BackgroundColor3 = BackgroundColor,
@@ -266,15 +256,12 @@ function Library:CreateWindow(options)
         Parent = MainFrame, Color = StrokeColor, Thickness = 1.2, Transparency = 0.15,
     })
 
-    -- ========================================================
-    -- Delta-style Minibar (маленькая панель для свёрнутого окна)
-    -- ========================================================
+    -- Delta-style Minibar
     local Minibar = Create("Frame", {
         Parent = ScreenGui,
         BackgroundColor3 = CardColor,
         Size = UDim2.new(0, 180, 0, 44),
         Position = UDim2.new(0.5, -90, 1, -80),
-        AnchorPoint = Vector2.new(0, 0),
         Visible = false,
         Active = true,
         ZIndex = 10,
@@ -284,27 +271,15 @@ function Library:CreateWindow(options)
         Parent = Minibar, Color = AccentColor, Thickness = 1.4, Transparency = 0.2,
     })
 
-    -- Иконка
-    local MinibarIcon
-    if topbarLogo then
-        MinibarIcon = Create("ImageLabel", {
-            Parent = Minibar, BackgroundTransparency = 1,
-            Size = UDim2.new(0, 24, 0, 24),
-            Position = UDim2.new(0, 10, 0.5, -12),
-            Image = topbarLogo, ImageColor3 = AccentColor,
-        })
-    else
-        MinibarIcon = Create("TextLabel", {
-            Parent = Minibar, BackgroundTransparency = 1,
-            Size = UDim2.new(0, 24, 0, 24),
-            Position = UDim2.new(0, 10, 0.5, -12),
-            Text = "⚡", Font = Enum.Font.GothamBold,
-            TextSize = 16, TextColor3 = AccentColor,
-        })
-    end
+    Create("TextLabel", {
+        Parent = Minibar, BackgroundTransparency = 1,
+        Size = UDim2.new(0, 24, 0, 24),
+        Position = UDim2.new(0, 10, 0.5, -12),
+        Text = "⚡", Font = Enum.Font.GothamBold,
+        TextSize = 16, TextColor3 = AccentColor,
+    })
 
-    -- Название
-    local MinibarTitle = Create("TextLabel", {
+    Create("TextLabel", {
         Parent = Minibar, BackgroundTransparency = 1,
         Size = UDim2.new(1, -80, 1, 0),
         Position = UDim2.new(0, 40, 0, 0),
@@ -314,7 +289,6 @@ function Library:CreateWindow(options)
         TextTruncate = Enum.TextTruncate.AtEnd,
     })
 
-    -- Кнопка развернуть
     local MinibarExpand = Create("TextButton", {
         Parent = Minibar,
         Size = UDim2.new(0, 28, 0, 28),
@@ -322,35 +296,22 @@ function Library:CreateWindow(options)
         BackgroundColor3 = ItemColor,
         Text = "⤢", Font = Enum.Font.GothamBold,
         TextSize = 14, TextColor3 = AccentColor,
-        AutoButtonColor = false,
-        BorderSizePixel = 0,
+        AutoButtonColor = false, BorderSizePixel = 0,
     })
     Create("UICorner", {Parent = MinibarExpand, CornerRadius = UDim.new(0, 8)})
     AddBounce(MinibarExpand)
 
-    -- Мини-бар draggable
     MakeDraggable(Minibar, Minibar)
 
-    -- Кнопка разворачивания
-    local function RestoreFromMinibar()
+    MinibarExpand.MouseButton1Click:Connect(function()
         Minibar.Visible = false
         MainFrame.Visible = true
         MainScale.Scale = 0.9
         Tween(MainScale, {Scale = 1}, 0.35)
         Tween(MainFrame, {BackgroundTransparency = 0.05}, 0.35)
-    end
-    MinibarExpand.MouseButton1Click:Connect(RestoreFromMinibar)
-    Minibar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-            -- Тап по телу мини-бара (кроме кнопки) — тоже разворачивает
-            -- (сработает только если не drag)
-        end
     end)
 
-    -- ========================================================
     -- TopBar
-    -- ========================================================
     local TopBar = Create("Frame", {
         Parent = MainFrame,
         BackgroundColor3 = CardColor,
@@ -361,8 +322,7 @@ function Library:CreateWindow(options)
         BorderSizePixel = 0,
     })
     Create("UICorner", {Parent = TopBar, CornerRadius = UDim.new(0, 12)})
-    -- нижняя полоска, чтобы углы снизу не были скруглены "внутрь"
-    local topPatch = Create("Frame", {
+    Create("Frame", {
         Parent = TopBar, BackgroundColor3 = CardColor,
         BackgroundTransparency = 0.15, BorderSizePixel = 0,
         Size = UDim2.new(1, 0, 0, 14), Position = UDim2.new(0, 0, 1, -14),
@@ -370,22 +330,10 @@ function Library:CreateWindow(options)
 
     MakeDraggable(TopBar, MainFrame)
 
-    local titleOffsetX = 12
-    if topbarLogo then
-        Create("ImageLabel", {
-            Parent = TopBar, BackgroundTransparency = 1,
-            Size = UDim2.new(0, logoSize, 0, logoSize),
-            Position = UDim2.new(0, 10, 0.5, -(logoSize / 2)),
-            Image = topbarLogo, ImageColor3 = AccentColor,
-            ScaleType = Enum.ScaleType.Fit,
-        })
-        titleOffsetX = 10 + logoSize + 8
-    end
-
     local TitleContainer = Create("Frame", {
         Parent = TopBar, BackgroundTransparency = 1,
-        Size = UDim2.new(0, 160, 1, 0),
-        Position = UDim2.new(0, titleOffsetX, 0, 0),
+        Size = UDim2.new(0, 200, 1, 0),
+        Position = UDim2.new(0, 12, 0, 0),
     })
     Create("TextLabel", {
         Parent = TitleContainer,
@@ -402,7 +350,6 @@ function Library:CreateWindow(options)
         TextXAlignment = Enum.TextXAlignment.Left,
     })
 
-    -- Кнопки close / minimize
     local CloseBtn = Create("TextButton", {
         Parent = TopBar, Text = "✕", Font = Enum.Font.GothamBold, TextSize = 13,
         TextColor3 = SubTextColor, BackgroundTransparency = 1,
@@ -417,18 +364,14 @@ function Library:CreateWindow(options)
     })
     AddBounce(CloseBtn); AddBounce(MinBtn)
 
-    -- ========================================================
-    -- Minimize → Delta-style minibar
-    -- ========================================================
+    -- Minimize → minibar
     MinBtn.MouseButton1Click:Connect(function()
-        -- Сохраняем позицию окна → ставим мини-бар туда
         Minibar.Position = UDim2.new(
             MainFrame.Position.X.Scale,
-            MainFrame.Position.X.Offset - 90 + 170, -- примерно к правому краю окна
+            MainFrame.Position.X.Offset - 90 + 170,
             MainFrame.Position.Y.Scale,
             MainFrame.Position.Y.Offset - 80
         )
-        -- Анимация: окно уменьшается, мини-бар выезжает
         Tween(MainScale, {Scale = 0.85}, 0.28)
         Tween(MainFrame, {BackgroundTransparency = 1}, 0.28)
         task.wait(0.22)
@@ -438,9 +381,15 @@ function Library:CreateWindow(options)
         Tween(Minibar, {Size = UDim2.new(0, 180, 0, 44)}, 0.3)
     end)
 
-    -- ========================================================
-    -- Sidebar (мобильная, узкая)
-    -- ========================================================
+    -- Close confirm
+    CloseBtn.MouseButton1Click:Connect(function()
+        Tween(MainScale, {Scale = 0.85}, 0.3)
+        Tween(MainFrame, {BackgroundTransparency = 1}, 0.3)
+        task.wait(0.35)
+        ScreenGui:Destroy()
+    end)
+
+    -- Sidebar
     local Sidebar = Create("Frame", {
         Parent = MainFrame,
         BackgroundColor3 = CardColor,
@@ -470,16 +419,13 @@ function Library:CreateWindow(options)
         TabContainer.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y + 10)
     end)
 
-    -- Разделитель
     Create("Frame", {
         Parent = MainFrame, BackgroundColor3 = StrokeColor,
         BorderSizePixel = 0, Size = UDim2.new(0, 1, 1, -40),
         Position = UDim2.new(0, 110, 0, 40),
     })
 
-    -- ========================================================
     -- Content Area
-    -- ========================================================
     local ContentArea = Create("Frame", {
         Parent = MainFrame,
         BackgroundTransparency = 1,
@@ -488,141 +434,27 @@ function Library:CreateWindow(options)
         Active = true,
     })
 
-    -- ========================================================
-    -- Confirm Close Popup
-    -- ========================================================
-    local Popup = Create("Frame", {
-        Parent = ScreenGui, BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-        BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0),
-        ZIndex = 100, Visible = false, Active = true,
-    })
-    local PopupCard = Create("Frame", {
-        Parent = Popup, BackgroundColor3 = BackgroundColor,
-        Size = UDim2.new(0, 280, 0, 150),
-        Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5),
-        ZIndex = 101, BackgroundTransparency = 1,
-    })
-    Create("UICorner", {Parent = PopupCard, CornerRadius = UDim.new(0, 12)})
-    local PopupScale = Create("UIScale", {Parent = PopupCard, Scale = 0.85})
-    local PopupStroke = Create("UIStroke", {
-        Parent = PopupCard, Color = StrokeColor, Thickness = 1.2, Transparency = 1,
-    })
-    local PopupTitle = Create("TextLabel", {
-        Parent = PopupCard, Text = "Закрыть Sensei?",
-        Font = Enum.Font.GothamBold, TextSize = 16, TextColor3 = TextColor,
-        BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 26),
-        Position = UDim2.new(0, 0, 0, 22), ZIndex = 102,
-        TextTransparency = 1, TextXAlignment = Enum.TextXAlignment.Center,
-    })
-    local PopupText = Create("TextLabel", {
-        Parent = PopupCard, Text = "Несохранённые настройки могут быть потеряны.",
-        Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = SubTextColor,
-        BackgroundTransparency = 1, Size = UDim2.new(1, -30, 0, 40),
-        Position = UDim2.new(0, 15, 0, 50), ZIndex = 102,
-        TextTransparency = 1, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center,
-    })
-    local YesBtn = Create("TextButton", {
-        Parent = PopupCard, Text = "Закрыть",
-        Font = Enum.Font.GothamBold, TextSize = 12,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundColor3 = AccentColor,
-        Size = UDim2.new(0, 110, 0, 32),
-        Position = UDim2.new(0.5, 8, 1, -44),
-        ZIndex = 102, BackgroundTransparency = 1, TextTransparency = 1,
-        AutoButtonColor = false, BorderSizePixel = 0,
-    })
-    Create("UICorner", {Parent = YesBtn, CornerRadius = UDim.new(0, 8)})
-    AddBounce(YesBtn)
-    local NoBtn = Create("TextButton", {
-        Parent = PopupCard, Text = "Отмена",
-        Font = Enum.Font.GothamBold, TextSize = 12,
-        TextColor3 = TextColor, BackgroundColor3 = ItemColor,
-        Size = UDim2.new(0, 110, 0, 32),
-        Position = UDim2.new(0.5, -118, 1, -44),
-        ZIndex = 102, BackgroundTransparency = 1, TextTransparency = 1,
-        AutoButtonColor = false, BorderSizePixel = 0,
-    })
-    Create("UICorner", {Parent = NoBtn, CornerRadius = UDim.new(0, 8)})
-    AddBounce(NoBtn)
-
-    CloseBtn.MouseButton1Click:Connect(function()
-        Popup.Visible = true
-        Tween(Popup, {BackgroundTransparency = 0.5}, 0.3)
-        Tween(PopupCard, {BackgroundTransparency = 0}, 0.3)
-        Tween(PopupScale, {Scale = 1}, 0.3)
-        Tween(PopupStroke, {Transparency = 0.3}, 0.3)
-        Tween(PopupTitle, {TextTransparency = 0}, 0.3)
-        Tween(PopupText, {TextTransparency = 0}, 0.3)
-        Tween(YesBtn, {BackgroundTransparency = 0, TextTransparency = 0}, 0.3)
-        Tween(NoBtn, {BackgroundTransparency = 0, TextTransparency = 0}, 0.3)
-    end)
-    YesBtn.MouseButton1Click:Connect(function()
-        Tween(MainScale, {Scale = 0.85}, 0.3)
-        Tween(MainFrame, {BackgroundTransparency = 1}, 0.3)
-        task.wait(0.35)
-        ScreenGui:Destroy()
-    end)
-    NoBtn.MouseButton1Click:Connect(function()
-        Tween(Popup, {BackgroundTransparency = 1}, 0.3)
-        Tween(PopupCard, {BackgroundTransparency = 1}, 0.3)
-        Tween(PopupScale, {Scale = 0.85}, 0.3)
-        Tween(PopupStroke, {Transparency = 1}, 0.3)
-        Tween(PopupTitle, {TextTransparency = 1}, 0.3)
-        Tween(PopupText, {TextTransparency = 1}, 0.3)
-        Tween(YesBtn, {BackgroundTransparency = 1, TextTransparency = 1}, 0.3)
-        Tween(NoBtn, {BackgroundTransparency = 1, TextTransparency = 1}, 0.3)
-        task.wait(0.3)
-        Popup.Visible = false
-    end)
-
-    -- ========================================================
     -- Window API
-    -- ========================================================
     local Window = {
         CurrentTab = nil,
         Tabs = {},
-        Title = TitleContainer,
-        AllCards = {},
         MainFrame = MainFrame,
-        CurrentTransparency = 0.05,
         ConfigElements = {},
         ScreenGui = ScreenGui,
+        _refs = {
+            TabContainer = TabContainer,
+            ContentArea = ContentArea,
+            ScreenGui = ScreenGui,
+        },
     }
 
-    function Window:SetTransparency(val)
-        Window.CurrentTransparency = val
-        if MainFrame.Visible then
-            Tween(MainFrame, {BackgroundTransparency = val}, 0.3)
-        end
-    end
-
-    function Window:SetThemeAccent(color)
-        AccentColor = color
-        AccentColorLight = color:Lerp(Color3.new(1,1,1), 0.4)
-        Tween(MainStroke, {Color = color:Lerp(Color3.new(1,1,1), 0.7)}, 0.3)
-        Tween(MinibarStroke, {Color = color}, 0.3)
-    end
-
-    -- Заглушка, чтобы не падало, если кто-то вызовет
-    function Window:SelectTab() end
-
-    return Window, {
-        TopBar = TopBar,
-        Sidebar = Sidebar,
-        TabContainer = TabContainer,
-        ContentArea = ContentArea,
-        MainFrame = MainFrame,
-        ScreenGui = ScreenGui,
-        Popup = Popup,
-        Minibar = Minibar,
-    }
+    return Window
 end-- ============================================================
--- WINDOW METHODS (CreateTab / CreatePage / CreateSection)
+-- TAB / PAGE / SECTION / COMPONENTS
 -- ============================================================
-local function AttachWindowMethods(Window, Refs)
-    local TabContainer = Refs.TabContainer
-    local ContentArea  = Refs.ContentArea
-    local ScreenGui    = Refs.ScreenGui
+local function AttachWindowMethods(Window)
+    local TabContainer = Window._refs.TabContainer
+    local ContentArea  = Window._refs.ContentArea
 
     -- ========================================================
     -- CreateTab
@@ -633,20 +465,16 @@ local function AttachWindowMethods(Window, Refs)
         if LocalPlayer then
             for _, allowed in ipairs(Library.WhitelistedUsers) do
                 if LocalPlayer.Name == allowed or LocalPlayer.DisplayName == allowed then
-                    isWhitelisted = true
-                    break
+                    isWhitelisted = true; break
                 end
             end
         end
 
         local TabBtn = Create("TextButton", {
-            Parent = TabContainer,
-            Text = "",
-            BackgroundColor3 = HoverColor,
-            BackgroundTransparency = 1,
+            Parent = TabContainer, Text = "",
+            BackgroundColor3 = HoverColor, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 34),
-            AutoButtonColor = false,
-            BorderSizePixel = 0,
+            AutoButtonColor = false, BorderSizePixel = 0,
         })
         Create("UICorner", {Parent = TabBtn, CornerRadius = UDim.new(0, 8)})
         AddBounce(TabBtn, 0.97)
@@ -662,12 +490,9 @@ local function AttachWindowMethods(Window, Refs)
         Create("UICorner", {Parent = Indicator, CornerRadius = UDim.new(1, 0)})
 
         local Txt = Create("TextLabel", {
-            Parent = TabBtn,
-            Text = tabName,
-            Font = Enum.Font.GothamBold,
-            TextSize = 12,
-            TextColor3 = SubTextColor,
-            BackgroundTransparency = 1,
+            Parent = TabBtn, Text = tabName,
+            Font = Enum.Font.GothamBold, TextSize = 12,
+            TextColor3 = SubTextColor, BackgroundTransparency = 1,
             Size = UDim2.new(1, -36, 1, 0),
             Position = UDim2.new(0, 12, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Left,
@@ -684,10 +509,8 @@ local function AttachWindowMethods(Window, Refs)
         end
 
         local TabContent = Create("Frame", {
-            Parent = ContentArea,
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0),
-            Visible = false,
+            Parent = ContentArea, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), Visible = false,
         })
 
         local PageNav = Create("Frame", {
@@ -695,8 +518,7 @@ local function AttachWindowMethods(Window, Refs)
             Size = UDim2.new(1, 0, 0, 30),
         })
         Create("UIListLayout", {
-            Parent = PageNav,
-            FillDirection = Enum.FillDirection.Horizontal,
+            Parent = PageNav, FillDirection = Enum.FillDirection.Horizontal,
             Padding = UDim.new(0, 12),
             VerticalAlignment = Enum.VerticalAlignment.Center,
         })
@@ -710,8 +532,7 @@ local function AttachWindowMethods(Window, Refs)
         local TabConfig = {
             Button = TabBtn, Content = TabContent,
             Indicator = Indicator, Txt = Txt,
-            Pages = {}, CurrentPage = nil,
-            IsLocked = isLocked,
+            Pages = {}, CurrentPage = nil, IsLocked = isLocked,
         }
         table.insert(Window.Tabs, TabConfig)
 
@@ -720,7 +541,6 @@ local function AttachWindowMethods(Window, Refs)
                 Library:Notify({
                     Title = "Доступ закрыт",
                     Description = "Этот раздел доступен только по подписке.",
-                    Duration = 3,
                 })
                 return
             end
@@ -751,9 +571,9 @@ local function AttachWindowMethods(Window, Refs)
             end
         end)
 
-        -- ====================================================
+        -- ================================================
         -- CreatePage
-        -- ====================================================
+        -- ================================================
         function TabConfig:CreatePage(pageName)
             pageName = pageName or "Page"
             local PageBtn = Create("TextButton", {
@@ -781,24 +601,21 @@ local function AttachWindowMethods(Window, Refs)
                 CanvasSize = UDim2.new(0, 0, 0, 0),
             })
 
-            local LeftColumn = Create("Frame", {
+            local Column = Create("Frame", {
                 Parent = PageScroll, BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 1, 0),
             })
             local L_Layout = Create("UIListLayout", {
-                Parent = LeftColumn,
-                SortOrder = Enum.SortOrder.LayoutOrder,
+                Parent = Column, SortOrder = Enum.SortOrder.LayoutOrder,
                 Padding = UDim.new(0, 8),
             })
-
             L_Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 PageScroll.CanvasSize = UDim2.new(0, 0, 0, L_Layout.AbsoluteContentSize.Y + 20)
             end)
 
             local PageObj = {
                 Scroll = PageScroll, Btn = PageBtn,
-                Highlight = PageHighlight,
-                Column = LeftColumn,
+                Highlight = PageHighlight, Column = Column,
             }
             table.insert(TabConfig.Pages, PageObj)
 
@@ -827,13 +644,13 @@ local function AttachWindowMethods(Window, Refs)
                 PageHighlight.BackgroundTransparency = 0
             end
 
-            -- ================================================
+            -- ============================================
             -- CreateSection
-            -- ================================================
+            -- ============================================
             function PageObj:CreateSection(sectionName)
                 sectionName = sectionName or "Section"
                 local SectionContainer = Create("Frame", {
-                    Parent = LeftColumn,
+                    Parent = Column,
                     BackgroundColor3 = CardColor,
                     Size = UDim2.new(1, 0, 0, 30),
                     AutomaticSize = Enum.AutomaticSize.Y,
@@ -874,19 +691,11 @@ local function AttachWindowMethods(Window, Refs)
                     Padding = UDim.new(0, 8),
                 })
 
-                -- Регистрируем карточку для поиска (позже пригодится)
-                table.insert(Window.AllCards, {
-                    Card = SectionContainer,
-                    OrigParent = LeftColumn,
-                    Tab = TabConfig,
-                    Page = PageObj,
-                })
-
                 local Elements = {}
 
-                -- ============================================
+                -- ========================================
                 -- AddButton
-                -- ============================================
+                -- ========================================
                 function Elements:AddButton(name, callback)
                     local Btn = Create("TextButton", {
                         Parent = ItemContainer, Text = "  " .. (name or "Button"),
@@ -907,23 +716,9 @@ local function AttachWindowMethods(Window, Refs)
                     return Btn
                 end
 
-                -- ============================================
-                -- AddCopyButton
-                -- ============================================
-                function Elements:AddCopyButton(name, copyText)
-                    return Elements:AddButton(name, function()
-                        SafeCopy(copyText)
-                        Library:Notify({
-                            Title = "Скопировано",
-                            Description = "Текст в буфере обмена.",
-                            Duration = 2,
-                        })
-                    end)
-                end
-
-                -- ============================================
+                -- ========================================
                 -- AddToggle
-                -- ============================================
+                -- ========================================
                 function Elements:AddToggle(name, default, callback)
                     local state = default and true or false
                     local Frame = Create("Frame", {
@@ -986,9 +781,9 @@ local function AttachWindowMethods(Window, Refs)
                     return {Set = internalSet, Get = function() return state end}
                 end
 
-                -- ============================================
+                -- ========================================
                 -- AddSlider
-                -- ============================================
+                -- ========================================
                 function Elements:AddSlider(name, min, max, default, callback)
                     min = min or 0
                     max = max or 100
@@ -1047,7 +842,6 @@ local function AttachWindowMethods(Window, Refs)
                         if fire ~= false and callback then pcall(callback, val) end
                     end
 
-                    -- Активная зона для тапа по всему треку
                     local Hit = Create("TextButton", {
                         Parent = Frame, Text = "",
                         BackgroundTransparency = 1,
@@ -1091,17 +885,12 @@ local function AttachWindowMethods(Window, Refs)
                     return {Set = internalSet, Get = function() return val end}
                 end
 
-                -- ============================================
+                -- ========================================
                 -- AddDropdown
-                -- ============================================
+                -- ========================================
                 function Elements:AddDropdown(name, options, isMulti, callback)
                     options = options or {}
-                    local selected
-                    if isMulti then
-                        selected = {}
-                    else
-                        selected = options[1]
-                    end
+                    local selected = isMulti and {} or options[1]
                     local dropped = false
                     local optionButtons = {}
                     local maxVisible = math.min(#options, 4)
@@ -1153,13 +942,11 @@ local function AttachWindowMethods(Window, Refs)
                         CanvasSize = UDim2.new(0, 0, 0, #options * 28),
                         ScrollBarThickness = 2,
                         ScrollBarImageColor3 = StrokeColor,
-                        BorderSizePixel = 0,
-                        Visible = false,
+                        BorderSizePixel = 0, Visible = false,
                     })
                     Create("UICorner", {Parent = ListFrame, CornerRadius = UDim.new(0, 8)})
                     Create("UIListLayout", {
-                        Parent = ListFrame,
-                        SortOrder = Enum.SortOrder.LayoutOrder,
+                        Parent = ListFrame, SortOrder = Enum.SortOrder.LayoutOrder,
                     })
 
                     local function updateText()
@@ -1173,17 +960,8 @@ local function AttachWindowMethods(Window, Refs)
                     end
 
                     local function isSelected(opt)
-                        if isMulti then
-                            return table.find(selected, opt) ~= nil
-                        end
+                        if isMulti then return table.find(selected, opt) ~= nil end
                         return selected == opt
-                    end
-
-                    local function refreshBtn(btn, opt)
-                        local on = isSelected(opt)
-                        Tween(btn, {
-                            TextColor3 = on and AccentColor or SubTextColor,
-                        }, 0.15)
                     end
 
                     for i, opt in ipairs(options) do
@@ -1212,7 +990,10 @@ local function AttachWindowMethods(Window, Refs)
                                 task.delay(0.22, function() ListFrame.Visible = false end)
                             end
                             for _, b in ipairs(optionButtons) do
-                                refreshBtn(b, b.Text:gsub("^%s+", ""))
+                                local txt = b.Text:gsub("^%s+", "")
+                                Tween(b, {
+                                    TextColor3 = isSelected(txt) and AccentColor or SubTextColor,
+                                }, 0.15)
                             end
                             updateText()
                             if callback then pcall(callback, selected) end
@@ -1238,7 +1019,10 @@ local function AttachWindowMethods(Window, Refs)
                         Set = function(v)
                             selected = v
                             for _, b in ipairs(optionButtons) do
-                                refreshBtn(b, b.Text:gsub("^%s+", ""))
+                                local txt = b.Text:gsub("^%s+", "")
+                                Tween(b, {
+                                    TextColor3 = isSelected(txt) and AccentColor or SubTextColor,
+                                }, 0.15)
                             end
                             updateText()
                         end,
@@ -1248,9 +1032,9 @@ local function AttachWindowMethods(Window, Refs)
                             Get = function() return selected end}
                 end
 
-                -- ============================================
+                -- ========================================
                 -- AddTextbox
-                -- ============================================
+                -- ========================================
                 function Elements:AddTextbox(name, placeholder, callback)
                     local Frame = Create("Frame", {
                         Parent = ItemContainer, BackgroundTransparency = 1,
@@ -1294,208 +1078,75 @@ local function AttachWindowMethods(Window, Refs)
                             Get = function() return Input.Text end}
                 end
 
-                -- ============================================
-                -- AddColorPicker
-                -- ============================================
-                function Elements:AddColorPicker(name, defaultColor, callback)
-                    local color = defaultColor or AccentColor
-                    local h, s, v = Color3.toHSV(color)
-                    local dropped = false
+                -- ========================================
+                -- AddKeybind
+                -- ========================================
+                function Elements:AddKeybind(name, defaultKey, callback)
+                    local currentKey = defaultKey or Enum.KeyCode.RightShift
+                    local listening = false
 
-                    local Wrapper = Create("Frame", {
+                    local Frame = Create("Frame", {
                         Parent = ItemContainer, BackgroundTransparency = 1,
-                        Size = UDim2.new(1, 0, 0, 30),
-                        ClipsDescendants = true,
+                        Size = UDim2.new(1, 0, 0, 34),
                     })
                     Create("TextLabel", {
-                        Parent = Wrapper, Text = name or "Color",
+                        Parent = Frame, Text = name or "Keybind",
                         Font = Enum.Font.Gotham, TextSize = 12,
                         TextColor3 = TextColor, BackgroundTransparency = 1,
-                        Size = UDim2.new(1, -50, 0, 30),
+                        Size = UDim2.new(1, -70, 1, 0),
                         Position = UDim2.new(0, 2, 0, 0),
                         TextXAlignment = Enum.TextXAlignment.Left,
                     })
-                    local Preview = Create("TextButton", {
-                        Parent = Wrapper, Text = "",
-                        BackgroundColor3 = color,
-                        Size = UDim2.new(0, 32, 0, 20),
-                        Position = UDim2.new(1, -34, 0.5, -10),
+                    local KeyBtn = Create("TextButton", {
+                        Parent = Frame,
+                        Text = currentKey and currentKey.Name or "None",
+                        Font = Enum.Font.GothamBold, TextSize = 11,
+                        TextColor3 = AccentColor, BackgroundColor3 = ItemColor,
+                        Size = UDim2.new(0, 64, 0, 24),
+                        Position = UDim2.new(1, -66, 0.5, -12),
                         AutoButtonColor = false, BorderSizePixel = 0,
                     })
-                    Create("UICorner", {Parent = Preview, CornerRadius = UDim.new(0, 6)})
+                    Create("UICorner", {Parent = KeyBtn, CornerRadius = UDim.new(0, 6)})
                     Create("UIStroke", {
-                        Parent = Preview, Color = Color3.fromRGB(255, 255, 255),
-                        Transparency = 0.7, Thickness = 1,
+                        Parent = KeyBtn, Color = StrokeColor, Thickness = 1, Transparency = 0.6,
                     })
-                    AddBounce(Preview)
+                    AddBounce(KeyBtn)
 
-                    local PickerArea = Create("Frame", {
-                        Parent = Wrapper, BackgroundColor3 = BackgroundColor,
-                        Size = UDim2.new(1, 0, 0, 130),
-                        Position = UDim2.new(0, 0, 0, 34),
-                    })
-                    Create("UICorner", {Parent = PickerArea, CornerRadius = UDim.new(0, 8)})
-
-                    local SVMap = Create("TextButton", {
-                        Parent = PickerArea, Text = "",
-                        BackgroundColor3 = Color3.fromHSV(h, 1, 1),
-                        Size = UDim2.new(1, -20, 0, 76),
-                        Position = UDim2.new(0, 10, 0, 10),
-                        AutoButtonColor = false, BorderSizePixel = 0,
-                    })
-                    Create("UICorner", {Parent = SVMap, CornerRadius = UDim.new(0, 6)})
-
-                    local WhiteGrad = Create("Frame", {
-                        Parent = SVMap, BackgroundColor3 = Color3.new(1,1,1),
-                        Size = UDim2.new(1,0,1,0), BorderSizePixel = 0,
-                    })
-                    Create("UIGradient", {
-                        Parent = WhiteGrad,
-                        Transparency = NumberSequence.new({
-                            NumberSequenceKeypoint.new(0, 0),
-                            NumberSequenceKeypoint.new(1, 1),
-                        }),
-                    })
-                    Create("UICorner", {Parent = WhiteGrad, CornerRadius = UDim.new(0, 6)})
-
-                    local BlackGrad = Create("Frame", {
-                        Parent = SVMap, BackgroundColor3 = Color3.new(0,0,0),
-                        Size = UDim2.new(1,0,1,0), BorderSizePixel = 0,
-                    })
-                    Create("UIGradient", {
-                        Parent = BlackGrad,
-                        Rotation = 90,
-                        Transparency = NumberSequence.new({
-                            NumberSequenceKeypoint.new(0, 1),
-                            NumberSequenceKeypoint.new(1, 0),
-                        }),
-                    })
-                    Create("UICorner", {Parent = BlackGrad, CornerRadius = UDim.new(0, 6)})
-
-                    local SVRing = Create("Frame", {
-                        Parent = SVMap, BackgroundColor3 = Color3.new(1,1,1),
-                        Size = UDim2.new(0, 10, 0, 10),
-                        AnchorPoint = Vector2.new(0.5, 0.5),
-                        Position = UDim2.new(s, 0, 1 - v, 0),
-                        BorderSizePixel = 0,
-                    })
-                    Create("UICorner", {Parent = SVRing, CornerRadius = UDim.new(1, 0)})
-                    Create("UIStroke", {
-                        Parent = SVRing, Color = Color3.new(0,0,0), Thickness = 1,
-                    })
-
-                    local HueBar = Create("TextButton", {
-                        Parent = PickerArea, Text = "",
-                        BackgroundColor3 = Color3.new(1,1,1),
-                        Size = UDim2.new(1, -20, 0, 12),
-                        Position = UDim2.new(0, 10, 0, 96),
-                        AutoButtonColor = false, BorderSizePixel = 0,
-                    })
-                    Create("UICorner", {Parent = HueBar, CornerRadius = UDim.new(1, 0)})
-                    Create("UIGradient", {
-                        Parent = HueBar,
-                        Color = ColorSequence.new({
-                            ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
-                            ColorSequenceKeypoint.new(0.167, Color3.fromRGB(255,255,0)),
-                            ColorSequenceKeypoint.new(0.333, Color3.fromRGB(0,255,0)),
-                            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,255)),
-                            ColorSequenceKeypoint.new(0.667, Color3.fromRGB(0,0,255)),
-                            ColorSequenceKeypoint.new(0.833, Color3.fromRGB(255,0,255)),
-                            ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,0)),
-                        }),
-                    })
-                    local HueRing = Create("Frame", {
-                        Parent = HueBar, BackgroundColor3 = Color3.new(1,1,1),
-                        Size = UDim2.new(0, 14, 0, 14),
-                        AnchorPoint = Vector2.new(0.5, 0.5),
-                        Position = UDim2.new(h, 0, 0.5, 0),
-                        BorderSizePixel = 0,
-                    })
-                    Create("UICorner", {Parent = HueRing, CornerRadius = UDim.new(1, 0)})
-                    Create("UIStroke", {
-                        Parent = HueRing, Color = Color3.new(0,0,0),
-                        Thickness = 1, Transparency = 0.4,
-                    })
-
-                    local function updateColor(fire)
-                        color = Color3.fromHSV(h, s, v)
-                        Preview.BackgroundColor3 = color
-                        SVMap.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-                        if fire ~= false and callback then pcall(callback, color) end
+                    local listenConn
+                    local function stopListen()
+                        listening = false
+                        if listenConn then listenConn:Disconnect(); listenConn = nil end
+                        KeyBtn.Text = currentKey and currentKey.Name or "None"
                     end
 
-                    local dragSV, dragHue = false, false
-                    SVMap.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1
-                            or input.UserInputType == Enum.UserInputType.Touch then
-                            dragSV = true
-                            SVMap.ScrollingEnabled = false
-                        end
-                    end)
-                    HueBar.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1
-                            or input.UserInputType == Enum.UserInputType.Touch then
-                            dragHue = true
-                        end
-                    end)
-                    UserInputService.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1
-                            or input.UserInputType == Enum.UserInputType.Touch then
-                            dragSV, dragHue = false, false
-                        end
-                    end)
-                    UserInputService.InputChanged:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseMovement
-                            or input.UserInputType == Enum.UserInputType.Touch then
-                            if dragSV then
-                                local relX = math.clamp(
-                                    (input.Position.X - SVMap.AbsolutePosition.X) / SVMap.AbsoluteSize.X, 0, 1)
-                                local relY = math.clamp(
-                                    (input.Position.Y - SVMap.AbsolutePosition.Y) / SVMap.AbsoluteSize.Y, 0, 1)
-                                s = relX
-                                v = 1 - relY
-                                SVRing.Position = UDim2.new(s, 0, 1 - v, 0)
-                                updateColor(true)
-                            elseif dragHue then
-                                local relX = math.clamp(
-                                    (input.Position.X - HueBar.AbsolutePosition.X) / HueBar.AbsoluteSize.X, 0, 1)
-                                h = relX
-                                HueRing.Position = UDim2.new(h, 0, 0.5, 0)
-                                updateColor(true)
-                            end
-                        end
-                    end)
+                    local function startListen()
+                        if listening then stopListen(); return end
+                        listening = true
+                        KeyBtn.Text = "..."
+                        listenConn = UserInputService.InputBegan:Connect(function(input)
+                            if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+                            if input.KeyCode == Enum.KeyCode.Escape then stopListen(); return end
+                            currentKey = input.KeyCode
+                            stopListen()
+                            if callback then pcall(callback, currentKey) end
+                        end)
+                    end
 
-                    Preview.MouseButton1Click:Connect(function()
-                        dropped = not dropped
-                        Tween(Wrapper, {
-                            Size = UDim2.new(1, 0, 0, dropped and 170 or 30),
-                        }, 0.25)
-                    end)
-
-                    updateColor(false)
+                    KeyBtn.MouseButton1Click:Connect(startListen)
 
                     Window.ConfigElements[name] = {
-                        Set = function(hexOrColor)
-                            if typeof(hexOrColor) == "Color3" then
-                                h, s, v = Color3.toHSV(hexOrColor)
-                                SVRing.Position = UDim2.new(s, 0, 1 - v, 0)
-                                HueRing.Position = UDim2.new(h, 0, 0.5, 0)
-                                updateColor(false)
-                            elseif type(hexOrColor) == "string" then
-                                local ok, c = pcall(Color3.fromHex, hexOrColor)
-                                if ok then
-                                    h, s, v = Color3.toHSV(c)
-                                    SVRing.Position = UDim2.new(s, 0, 1 - v, 0)
-                                    HueRing.Position = UDim2.new(h, 0, 0.5, 0)
-                                    updateColor(false)
-                                end
+                        Set = function(kc)
+                            if typeof(kc) == "EnumItem" then currentKey = kc
+                            elseif type(kc) == "string" then
+                                local ok, k = pcall(function() return Enum.KeyCode[kc] end)
+                                if ok then currentKey = k end
                             end
+                            KeyBtn.Text = currentKey and currentKey.Name or "None"
                         end,
-                        Get = function() return color:ToHex() end,
+                        Get = function() return currentKey and currentKey.Name end,
                     }
-                    return {Set = function(c) h, s, v = Color3.toHSV(c); updateColor(false) end,
-                            Get = function() return color end}
+                    return {Set = function(kc) currentKey = kc; KeyBtn.Text = kc.Name end,
+                            Get = function() return currentKey end}
                 end
 
                 return Elements
@@ -1503,7 +1154,6 @@ local function AttachWindowMethods(Window, Refs)
             return PageObj
         end
 
-        -- Default tab
         if isDefault then
             TabBtn.BackgroundTransparency = 0.15
             Indicator.Size = UDim2.new(0, 3, 0, 18)
@@ -1516,490 +1166,17 @@ local function AttachWindowMethods(Window, Refs)
     end
 end
 
--- Возвращаем ссылки из CreateWindow и навешиваем методы
--- (перезаписываем оригинальный CreateWindow, чтобы добавить методы)
+-- ============================================================
+-- PATCH: оборачиваем CreateWindow, чтобы AttachWindowMethods применялся
+-- ============================================================
 local _origCreateWindow = Library.CreateWindow
 function Library:CreateWindow(opts)
-    local w, refs = _origCreateWindow(self, opts)
-    AttachWindowMethods(w, refs)
+    local w = _origCreateWindow(self, opts)
+    AttachWindowMethods(w)
     return w
-end-- ============================================================
--- CONFIG MANAGER (Saves / Loader)
--- Добавляется к Page через :CreateSection → Elements:AddConfigManager
--- ============================================================
-local function AttachConfigManager(Elements, ItemContainer, Window)
-    function Elements:AddConfigManager(folderName)
-        folderName = folderName or "SenseiConfigs"
-        if not _isfolder(folderName) then _makefolder(folderName) end
-
-        local ManagerFrame = Create("Frame", {
-            Parent = ItemContainer, BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 250),
-        })
-
-        local Search = Create("TextBox", {
-            Parent = ManagerFrame,
-            PlaceholderText = "Поиск сохранений...",
-            Font = Enum.Font.Gotham, TextSize = 12,
-            TextColor3 = TextColor, BackgroundColor3 = ItemColor,
-            PlaceholderColor3 = SubTextColor,
-            Size = UDim2.new(1, 0, 0, 30),
-            Position = UDim2.new(0, 0, 0, 0),
-            TextXAlignment = Enum.TextXAlignment.Left,
-            ClearTextOnFocus = false, BorderSizePixel = 0,
-        })
-        Create("UIPadding", {Parent = Search, PaddingLeft = UDim.new(0, 10)})
-        Create("UICorner", {Parent = Search, CornerRadius = UDim.new(0, 8)})
-        Create("UIStroke", {
-            Parent = Search, Color = StrokeColor, Thickness = 1, Transparency = 0.6,
-        })
-
-        local Monitor = Create("ScrollingFrame", {
-            Parent = ManagerFrame, BackgroundColor3 = Color3.fromRGB(15, 18, 24),
-            Size = UDim2.new(1, 0, 0, 110),
-            Position = UDim2.new(0, 0, 0, 38),
-            ScrollBarThickness = 3,
-            ScrollBarImageColor3 = StrokeColor,
-            BorderSizePixel = 0,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
-        })
-        Create("UICorner", {Parent = Monitor, CornerRadius = UDim.new(0, 8)})
-        Create("UIStroke", {
-            Parent = Monitor, Color = StrokeColor, Thickness = 1, Transparency = 0.6,
-        })
-        local MonitorLayout = Create("UIListLayout", {
-            Parent = Monitor,
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 5),
-        })
-        Create("UIPadding", {
-            Parent = Monitor,
-            PaddingTop = UDim.new(0, 6),
-            PaddingBottom = UDim.new(0, 6),
-            PaddingLeft = UDim.new(0, 6),
-            PaddingRight = UDim.new(0, 6),
-        })
-        MonitorLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Monitor.CanvasSize = UDim2.new(0, 0, 0, MonitorLayout.AbsoluteContentSize.Y + 12)
-        end)
-
-        local deleteMode = false
-        local editMode = false
-        local selectedForDelete = {}
-        local editTargetFile = ""
-
-        -- Controls (нижняя зона)
-        local Controls = Create("Frame", {
-            Parent = ManagerFrame, BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 90),
-            Position = UDim2.new(0, 0, 0, 155),
-        })
-
-        local NameBox = Create("TextBox", {
-            Parent = Controls,
-            PlaceholderText = "Имя сохранения...",
-            Font = Enum.Font.Gotham, TextSize = 12,
-            TextColor3 = TextColor, BackgroundColor3 = ItemColor,
-            PlaceholderColor3 = SubTextColor,
-            Size = UDim2.new(1, 0, 0, 28),
-            Position = UDim2.new(0, 0, 0, 0),
-            TextXAlignment = Enum.TextXAlignment.Left,
-            ClearTextOnFocus = false, BorderSizePixel = 0,
-        })
-        Create("UIPadding", {Parent = NameBox, PaddingLeft = UDim.new(0, 10)})
-        Create("UICorner", {Parent = NameBox, CornerRadius = UDim.new(0, 8)})
-        Create("UIStroke", {
-            Parent = NameBox, Color = StrokeColor, Thickness = 1, Transparency = 0.6,
-        })
-
-        local CreateBtn = Create("TextButton", {
-            Parent = Controls, Text = "Создать",
-            Font = Enum.Font.GothamBold, TextSize = 12,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundColor3 = AccentColor,
-            Size = UDim2.new(0.5, -4, 0, 28),
-            Position = UDim2.new(0, 0, 0, 36),
-            AutoButtonColor = false, BorderSizePixel = 0,
-        })
-        Create("UICorner", {Parent = CreateBtn, CornerRadius = UDim.new(0, 8)})
-        AddBounce(CreateBtn)
-
-        local DeleteTogBtn = Create("TextButton", {
-            Parent = Controls, Text = "Удаление: ВЫКЛ",
-            Font = Enum.Font.GothamBold, TextSize = 12,
-            TextColor3 = TextColor,
-            BackgroundColor3 = ItemColor,
-            Size = UDim2.new(0.5, -4, 0, 28),
-            Position = UDim2.new(0.5, 4, 0, 36),
-            AutoButtonColor = false, BorderSizePixel = 0,
-        })
-        Create("UICorner", {Parent = DeleteTogBtn, CornerRadius = UDim.new(0, 8)})
-        AddBounce(DeleteTogBtn)
-
-        local ActionArea = Create("Frame", {
-            Parent = Controls, BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 28),
-            Position = UDim2.new(0, 0, 0, 36),
-            Visible = false,
-        })
-        local ConfirmActionBtn = Create("TextButton", {
-            Parent = ActionArea, Text = "Подтвердить",
-            Font = Enum.Font.GothamBold, TextSize = 12,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundColor3 = Color3.fromRGB(200, 60, 70),
-            Size = UDim2.new(0.5, -4, 1, 0),
-            Position = UDim2.new(0, 0, 0, 0),
-            AutoButtonColor = false, BorderSizePixel = 0,
-        })
-        Create("UICorner", {Parent = ConfirmActionBtn, CornerRadius = UDim.new(0, 8)})
-        AddBounce(ConfirmActionBtn)
-
-        local CancelActionBtn = Create("TextButton", {
-            Parent = ActionArea, Text = "Отмена",
-            Font = Enum.Font.GothamBold, TextSize = 12,
-            TextColor3 = TextColor, BackgroundColor3 = ItemColor,
-            Size = UDim2.new(0.5, -4, 1, 0),
-            Position = UDim2.new(0.5, 4, 0, 0),
-            AutoButtonColor = false, BorderSizePixel = 0,
-        })
-        Create("UICorner", {Parent = CancelActionBtn, CornerRadius = UDim.new(0, 8)})
-        AddBounce(CancelActionBtn)
-
-        -- Внутреннее окно подтверждения
-        local ConfirmPopup = Create("Frame", {
-            Parent = ManagerFrame, BackgroundColor3 = BackgroundColor,
-            Size = UDim2.new(1, -20, 1, -20),
-            Position = UDim2.new(0, 10, 0, 10),
-            ZIndex = 60, BackgroundTransparency = 1, Visible = false,
-            BorderSizePixel = 0,
-        })
-        Create("UICorner", {Parent = ConfirmPopup, CornerRadius = UDim.new(0, 10)})
-        Create("UIStroke", {
-            Parent = ConfirmPopup, Color = Color3.fromRGB(200, 60, 70),
-            Thickness = 1.2, Transparency = 1,
-        })
-        local PTitle = Create("TextLabel", {
-            Parent = ConfirmPopup, Text = "Удалить выбранные?",
-            Font = Enum.Font.GothamBold, TextSize = 14,
-            TextColor3 = Color3.fromRGB(255, 90, 100), BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 26),
-            Position = UDim2.new(0, 0, 0, 40),
-            ZIndex = 61, TextTransparency = 1,
-        })
-        local PDesc = Create("TextLabel", {
-            Parent = ConfirmPopup, Text = "Сохранения будут удалены навсегда.",
-            Font = Enum.Font.Gotham, TextSize = 12,
-            TextColor3 = SubTextColor, BackgroundTransparency = 1,
-            Size = UDim2.new(1, -30, 0, 40),
-            Position = UDim2.new(0, 15, 0, 70),
-            ZIndex = 61, TextTransparency = 1, TextWrapped = true,
-        })
-        local PYes = Create("TextButton", {
-            Parent = ConfirmPopup, Text = "Да",
-            Font = Enum.Font.GothamBold, TextSize = 13,
-            TextColor3 = Color3.fromRGB(255,255,255),
-            BackgroundColor3 = Color3.fromRGB(200, 60, 70),
-            Size = UDim2.new(0.5, -25, 0, 30),
-            Position = UDim2.new(0, 20, 0, 130),
-            AutoButtonColor = false, BorderSizePixel = 0,
-            BackgroundTransparency = 1, TextTransparency = 1, ZIndex = 61,
-        })
-        Create("UICorner", {Parent = PYes, CornerRadius = UDim.new(0, 8)})
-        AddBounce(PYes)
-        local PNo = Create("TextButton", {
-            Parent = ConfirmPopup, Text = "Нет",
-            Font = Enum.Font.GothamBold, TextSize = 13,
-            TextColor3 = TextColor, BackgroundColor3 = ItemColor,
-            Size = UDim2.new(0.5, -25, 0, 30),
-            Position = UDim2.new(0.5, 5, 0, 130),
-            AutoButtonColor = false, BorderSizePixel = 0,
-            BackgroundTransparency = 1, TextTransparency = 1, ZIndex = 61,
-        })
-        Create("UICorner", {Parent = PNo, CornerRadius = UDim.new(0, 8)})
-        AddBounce(PNo)
-
-        local function showPopup()
-            ConfirmPopup.Visible = true
-            Tween(ConfirmPopup, {BackgroundTransparency = 0.05}, 0.28)
-            Tween(ConfirmPopup:FindFirstChildOfClass("UIStroke"), {Transparency = 0.5}, 0.28)
-            Tween(PTitle, {TextTransparency = 0}, 0.28)
-            Tween(PDesc, {TextTransparency = 0}, 0.28)
-            Tween(PYes, {BackgroundTransparency = 0, TextTransparency = 0}, 0.28)
-            Tween(PNo, {BackgroundTransparency = 0, TextTransparency = 0}, 0.28)
-        end
-        local function hidePopup()
-            Tween(ConfirmPopup, {BackgroundTransparency = 1}, 0.28)
-            Tween(ConfirmPopup:FindFirstChildOfClass("UIStroke"), {Transparency = 1}, 0.28)
-            Tween(PTitle, {TextTransparency = 1}, 0.28)
-            Tween(PDesc, {TextTransparency = 1}, 0.28)
-            Tween(PYes, {BackgroundTransparency = 1, TextTransparency = 1}, 0.28)
-            Tween(PNo, {BackgroundTransparency = 1, TextTransparency = 1}, 0.28)
-            task.wait(0.3)
-            ConfirmPopup.Visible = false
-        end
-
-        -- ====================================================
-        -- Refresh monitor
-        -- ====================================================
-        local function refreshMonitor()
-            for _, v in ipairs(Monitor:GetChildren()) do
-                if v:IsA("Frame") then v:Destroy() end
-            end
-            selectedForDelete = {}
-
-            local files = _listfiles(folderName)
-            for _, filepath in ipairs(files) do
-                local rawName = filepath:match("([^/\\]+)%.json$")
-                if rawName then
-                    local display = rawName:gsub("_%d+$", ""):gsub("_%d+%.%d+$", "")
-                    local Row = Create("Frame", {
-                        Parent = Monitor, BackgroundColor3 = ItemColor,
-                        Size = UDim2.new(1, 0, 0, 32),
-                        BorderSizePixel = 0,
-                    })
-                    Create("UICorner", {Parent = Row, CornerRadius = UDim.new(0, 8)})
-
-                    Create("TextLabel", {
-                        Parent = Row, Text = display,
-                        Font = Enum.Font.Gotham, TextSize = 12,
-                        TextColor3 = TextColor, BackgroundTransparency = 1,
-                        Size = UDim2.new(1, -76, 1, 0),
-                        Position = UDim2.new(0, 10, 0, 0),
-                        TextXAlignment = Enum.TextXAlignment.Left,
-                        TextTruncate = Enum.TextTruncate.AtEnd,
-                    })
-
-                    local LoadBtn = Create("TextButton", {
-                        Parent = Row, Text = "Load",
-                        Font = Enum.Font.GothamBold, TextSize = 10,
-                        TextColor3 = Color3.fromRGB(255,255,255),
-                        BackgroundColor3 = Color3.fromRGB(50, 150, 80),
-                        Size = UDim2.new(0, 34, 0, 22),
-                        Position = UDim2.new(1, -72, 0.5, -11),
-                        AutoButtonColor = false, BorderSizePixel = 0,
-                    })
-                    Create("UICorner", {Parent = LoadBtn, CornerRadius = UDim.new(0, 6)})
-                    AddBounce(LoadBtn)
-
-                    local EditBtn = Create("TextButton", {
-                        Parent = Row, Text = "Edit",
-                        Font = Enum.Font.GothamBold, TextSize = 10,
-                        TextColor3 = Color3.fromRGB(255,255,255),
-                        BackgroundColor3 = Color3.fromRGB(180, 120, 50),
-                        Size = UDim2.new(0, 34, 0, 22),
-                        Position = UDim2.new(1, -36, 0.5, -11),
-                        AutoButtonColor = false, BorderSizePixel = 0,
-                    })
-                    Create("UICorner", {Parent = EditBtn, CornerRadius = UDim.new(0, 6)})
-                    AddBounce(EditBtn)
-
-                    local SelectionMask = Create("TextButton", {
-                        Parent = Row, Text = "",
-                        BackgroundTransparency = 1,
-                        Size = UDim2.new(1, -80, 1, 0),
-                        ZIndex = 2,
-                        AutoButtonColor = false,
-                    })
-                    SelectionMask.MouseButton1Click:Connect(function()
-                        if deleteMode then
-                            if selectedForDelete[filepath] then
-                                selectedForDelete[filepath] = nil
-                                Tween(Row, {BackgroundColor3 = ItemColor}, 0.2)
-                            else
-                                selectedForDelete[filepath] = true
-                                Tween(Row, {BackgroundColor3 = Color3.fromRGB(180, 60, 70)}, 0.2)
-                            end
-                        end
-                    end)
-
-                    LoadBtn.MouseButton1Click:Connect(function()
-                        if deleteMode or editMode then return end
-                        local ok, data = pcall(function()
-                            return HttpService:JSONDecode(_readfile(filepath))
-                        end)
-                        if ok and type(data) == "table" then
-                            for k, val in pairs(data) do
-                                local el = Window.ConfigElements[k]
-                                if el and el.Set then el.Set(val) end
-                            end
-                            Library:Notify({
-                                Title = "Загружено",
-                                Description = display,
-                                Duration = 2,
-                            })
-                        end
-                    end)
-
-                    EditBtn.MouseButton1Click:Connect(function()
-                        if deleteMode then return end
-                        editMode = true
-                        editTargetFile = filepath
-                        NameBox.Text = display
-                        CreateBtn.Visible = false
-                        DeleteTogBtn.Visible = false
-                        ActionArea.Visible = true
-                        ConfirmActionBtn.Text = "Сохранить"
-                        ConfirmActionBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
-                    end)
-                end
-            end
-        end
-
-        -- ====================================================
-        -- Save handler
-        -- ====================================================
-        local function executeSave(saveName)
-            local payload = {}
-            for k, el in pairs(Window.ConfigElements) do
-                if el.Get then payload[k] = el.Get() end
-            end
-            local ok, encoded = pcall(HttpService.JSONEncode, HttpService, payload)
-            if not ok then
-                Library:Notify({Title = "Ошибка", Description = "Не удалось сохранить."})
-                return
-            end
-            local uniqueKey = tostring(math.floor(tick()))
-            local finalPath = folderName .. "/" .. saveName .. "_" .. uniqueKey .. ".json"
-            _writefile(finalPath, encoded)
-            refreshMonitor()
-            Library:Notify({
-                Title = "Сохранено",
-                Description = saveName,
-                Duration = 2,
-            })
-        end
-
-        CreateBtn.MouseButton1Click:Connect(function()
-            if NameBox.Text ~= "" then
-                executeSave(NameBox.Text)
-                NameBox.Text = ""
-            end
-        end)
-
-        DeleteTogBtn.MouseButton1Click:Connect(function()
-            if editMode then return end
-            deleteMode = not deleteMode
-            DeleteTogBtn.Text = deleteMode and "Удаление: ВКЛ" or "Удаление: ВЫКЛ"
-            Tween(DeleteTogBtn, {
-                BackgroundColor3 = deleteMode and Color3.fromRGB(180, 60, 70) or ItemColor,
-            }, 0.2)
-            ActionArea.Visible = deleteMode
-            CreateBtn.Visible = not deleteMode
-            if deleteMode then
-                ConfirmActionBtn.Text = "Удалить"
-                ConfirmActionBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 70)
-            else
-                refreshMonitor()
-            end
-        end)
-
-        ConfirmActionBtn.MouseButton1Click:Connect(function()
-            if deleteMode then
-                showPopup()
-            elseif editMode then
-                local newName = NameBox.Text
-                if newName ~= "" then
-                    pcall(function() _delfile(editTargetFile) end)
-                    executeSave(newName)
-                end
-                editMode = false
-                ActionArea.Visible = false
-                CreateBtn.Visible = true
-                DeleteTogBtn.Visible = true
-                NameBox.Text = ""
-                refreshMonitor()
-            end
-        end)
-
-        PYes.MouseButton1Click:Connect(function()
-            for file, _ in pairs(selectedForDelete) do
-                pcall(function() _delfile(file) end)
-            end
-            deleteMode = false
-            DeleteTogBtn.Text = "Удаление: ВЫКЛ"
-            DeleteTogBtn.BackgroundColor3 = ItemColor
-            ActionArea.Visible = false
-            CreateBtn.Visible = true
-            refreshMonitor()
-            Library:Notify({
-                Title = "Удалено",
-                Description = "Сохранения стёрты.",
-                Duration = 2,
-            })
-            hidePopup()
-        end)
-
-        PNo.MouseButton1Click:Connect(function()
-            hidePopup()
-        end)
-
-        CancelActionBtn.MouseButton1Click:Connect(function()
-            editMode = false
-            deleteMode = false
-            DeleteTogBtn.Text = "Удаление: ВЫКЛ"
-            DeleteTogBtn.BackgroundColor3 = ItemColor
-            ActionArea.Visible = false
-            CreateBtn.Visible = true
-            DeleteTogBtn.Visible = true
-            NameBox.Text = ""
-            refreshMonitor()
-        end)
-
-        Search:GetPropertyChangedSignal("Text"):Connect(function()
-            local q = Search.Text:lower()
-            for _, v in ipairs(Monitor:GetChildren()) do
-                if v:IsA("Frame") then
-                    local lbl = v:FindFirstChildOfClass("TextLabel")
-                    if lbl then
-                        v.Visible = (q == "" or string.find(lbl.Text:lower(), q, 1, true) ~= nil)
-                    end
-                end
-            end
-        end)
-
-        refreshMonitor()
-    end
-end
-
--- ============================================================
--- PATCH: AttachConfigManager внутрь CreateSection
--- Перезаписываем AttachWindowMethods-обёртку, чтобы Elements получил AddConfigManager
--- ============================================================
-local _origAttach = AttachWindowMethods
--- AttachWindowMethods определён выше; нам нужно, чтобы внутри CreateSection
--- у Elements появился AddConfigManager. Проще всего — вызвать AttachConfigManager
--- внутри CreateSection через небольшой хак: Elements уже содержит методы,
--- мы добавляем AddConfigManager после того, как Elements создан.
---
--- Так как мы не можем легко вклиниться, делаем так: создаём дефолтный
--- AddConfigManager на уровне Elements ПОСЛЕ CreateSection. А чтобы не
--- ломать структуру, просто определим метод в конце файла через
--- модификацию Window — при следующем вызове CreateSection он будет
--- доступен.
---
--- Практическое решение: перезаписываем AttachWindowMethods на новую
--- версию, которая вызывает AttachConfigManager внутри CreateSection.
--- Но это уже сложно без переписывания AttachWindowMethods.
---
--- Чтобы не усложнять, оставляем AddConfigManager доступным как отдельный
--- вызов: после получения Page, можно вызвать Page:CreateSection("Config"),
--- а внутри его Elements — AddConfigManager. Он будет доступен, потому что
--- мы привязываем его в самом низу (см. ниже).
-
--- ============================================================
--- Публичный API: возврат методов для Config Manager
--- ============================================================
-function Library:CreateConfigManager(section, folderName)
-    -- section — это Elements, который вернул CreateSection
-    if section and section.AddConfigManager then
-        return section:AddConfigManager(folderName)
-    end
 end
 
 -- ============================================================
 -- EXPORT
 -- ============================================================
-Library.Version = "2.0.0"
-Library.Brand   = "Sensei"
-
 return Library
