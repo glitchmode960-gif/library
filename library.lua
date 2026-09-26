@@ -1,7 +1,7 @@
 --[[
-    Sensei UI Library — ZX v5.0
+    Sensei UI Library — ZX v5.1
     Author: CreativeGPT & Douwe
-    Version: 5.0.0
+    Version: 5.1.0
     Style: Blue Neon, mobile, Delta-minibar
     Load: local Sensei = loadstring(game:HttpGet("https://raw.githubusercontent.com/glitchmode960-gif/library/main/library.lua"))()
 ]]
@@ -17,8 +17,9 @@ local LocalPlayer = Players.LocalPlayer
 
 local Library = {
     WhitelistedUsers = {},
-    Version = "5.0.0",
+    Version = "5.1.0",
     Brand   = "Sensei",
+    ConfigElements = {},
 }
 
 -- ============================================================
@@ -38,50 +39,45 @@ local function SafeCopy(text)
 end
 
 -- ============================================================
--- ICONS (Material Icons от Roblox)
+-- ICONS
 -- ============================================================
 local ICONS = {
-    Minimize  = "rbxassetid://6031091004",   -- минус
-    Close     = "rbxassetid://6031090990",   -- X
-    Expand    = "rbxassetid://6031094667",   -- стрелка развернуть
-    Settings  = "rbxassetid://6031280882",   -- шестерёнка
-    User      = "rbxassetid://6031075937",   -- человечек
-    Copy      = "rbxassetid://6031154871",   -- копировать
-    Lock      = "rbxassetid://6031082533",   -- замок
-    Check     = "rbxassetid://6031091004",   -- галочка
-    Warning   = "rbxassetid://6031280882",   -- восклицание
-    Info      = "rbxassetid://6031075937",   -- инфо
-    Delete    = "rbxassetid://6031090990",   -- мусорка
-    Save      = "rbxassetid://6031280882",   -- дискета
-    Load      = "rbxassetid://6031094667",   -- стрелка
-    Edit      = "rbxassetid://6031280882",   -- карандаш
+    Minimize = "rbxassetid://6031091004",
+    Close    = "rbxassetid://6031090990",
+    Expand   = "rbxassetid://6031094667",
+    Settings = "rbxassetid://6031280882",
+    User     = "rbxassetid://6031075937",
+    Copy     = "rbxassetid://6031154871",
+    Lock     = "rbxassetid://6031082533",
 }
 
 -- ============================================================
--- Palette (Blue Neon)
+-- Palette
 -- ============================================================
-local AccentColor      = Color3.fromRGB(0, 170, 255)
-local AccentColorLight = Color3.fromRGB(120, 220, 255)
-local BackgroundColor  = Color3.fromRGB(15, 18, 24)
-local CardColor        = Color3.fromRGB(24, 28, 36)
-local ItemColor        = Color3.fromRGB(34, 40, 50)
-local HoverColor       = Color3.fromRGB(44, 52, 64)
-local TextColor        = Color3.fromRGB(240, 245, 252)
-local SubTextColor     = Color3.fromRGB(150, 165, 185)
-local StrokeColor      = Color3.fromRGB(45, 65, 100)
-local DangerColor      = Color3.fromRGB(200, 60, 70)
-local SuccessColor     = Color3.fromRGB(50, 160, 90)
-local WarningColor     = Color3.fromRGB(255, 190, 70)
+local Colors = {
+    Accent      = Color3.fromRGB(0, 170, 255),
+    AccentLight = Color3.fromRGB(120, 220, 255),
+    Background  = Color3.fromRGB(15, 18, 24),
+    Card        = Color3.fromRGB(24, 28, 36),
+    Item        = Color3.fromRGB(34, 40, 50),
+    Hover       = Color3.fromRGB(44, 52, 64),
+    Text        = Color3.fromRGB(240, 245, 252),
+    SubText     = Color3.fromRGB(150, 165, 185),
+    Stroke      = Color3.fromRGB(45, 65, 100),
+    Danger      = Color3.fromRGB(200, 60, 70),
+    Success     = Color3.fromRGB(50, 160, 90),
+    Warning     = Color3.fromRGB(255, 190, 70),
+}
 
 -- ============================================================
--- Create Instance
+-- Create
 -- ============================================================
 local function Create(className, props)
     local inst = Instance.new(className)
     if className == "TextBox" then inst.Text = "" end
     for k, v in pairs(props or {}) do inst[k] = v end
     if className == "TextLabel" or className == "TextButton" or className == "TextBox" then
-        if not (props and props.TextColor3) then inst.TextColor3 = TextColor end
+        if not (props and props.TextColor3) then inst.TextColor3 = Colors.Text end
         inst.TextTransparency = 0
     end
     return inst
@@ -156,14 +152,14 @@ local function MakeDraggable(topbar, object)
 end
 
 -- ============================================================
--- Helper: сделать иконку
+-- CreateIcon
 -- ============================================================
 local function CreateIcon(parent, iconId, size, position, color, zIndex)
     return Create("ImageLabel", {
         Parent = parent,
         BackgroundTransparency = 1,
         Image = iconId,
-        ImageColor3 = color or TextColor,
+        ImageColor3 = color or Colors.Text,
         Size = UDim2.new(0, size or 18, 0, size or 18),
         Position = position or UDim2.new(0, 0, 0.5, -(size or 18) / 2),
         ZIndex = zIndex or 10,
@@ -171,7 +167,7 @@ local function CreateIcon(parent, iconId, size, position, color, zIndex)
 end
 
 -- ============================================================
--- Notifications (с иконками)
+-- Notify
 -- ============================================================
 local GlobalNotifContainer
 
@@ -183,15 +179,15 @@ function Library:Notify(options)
     local duration = options.Duration or 3
     local kind = options.Kind or "info"
 
-    local accent = AccentColor
-    local iconId = ICONS.Info
-    if kind == "success" then accent = SuccessColor; iconId = ICONS.Check
-    elseif kind == "error" then accent = DangerColor; iconId = ICONS.Delete
-    elseif kind == "warning" then accent = WarningColor; iconId = ICONS.Warning end
+    local accent = Colors.Accent
+    local iconId = ICONS.Settings
+    if kind == "success" then accent = Colors.Success; iconId = ICONS.Copy
+    elseif kind == "error" then accent = Colors.Danger; iconId = ICONS.Close
+    elseif kind == "warning" then accent = Colors.Warning; iconId = ICONS.Settings end
 
     local Notif = Create("Frame", {
         Parent = GlobalNotifContainer,
-        BackgroundColor3 = BackgroundColor,
+        BackgroundColor3 = Colors.Background,
         Size = UDim2.new(1, 0, 0, 62),
         BackgroundTransparency = 1,
         ZIndex = 201,
@@ -201,7 +197,6 @@ function Library:Notify(options)
     local Stroke = Create("UIStroke", {
         Parent = Notif, Color = accent, Thickness = 1.4, Transparency = 1,
     })
-    -- Иконка слева
     local IconCircle = Create("Frame", {
         Parent = Notif, BackgroundColor3 = accent,
         Size = UDim2.new(0, 28, 0, 28),
@@ -209,23 +204,16 @@ function Library:Notify(options)
         BackgroundTransparency = 1, ZIndex = 202,
     })
     Create("UICorner", {Parent = IconCircle, CornerRadius = UDim.new(1, 0)})
-    Create("ImageLabel", {
-        Parent = IconCircle, BackgroundTransparency = 1,
-        Image = iconId, ImageColor3 = accent,
-        Size = UDim2.new(0, 18, 0, 18),
-        Position = UDim2.new(0.5, -9, 0.5, -9),
-        ImageTransparency = 1, ZIndex = 203,
-    })
-    -- Тексты
+    CreateIcon(IconCircle, iconId, 18, UDim2.new(0.5, -9, 0.5, -9), accent, 203)
     Create("TextLabel", {
         Parent = Notif, Text = title, Font = Enum.Font.GothamBold, TextSize = 13,
-        TextColor3 = TextColor, BackgroundTransparency = 1,
+        TextColor3 = Colors.Text, BackgroundTransparency = 1,
         Position = UDim2.new(0, 50, 0, 12), Size = UDim2.new(1, -60, 0, 16),
         TextXAlignment = Enum.TextXAlignment.Left, TextTransparency = 1, ZIndex = 202,
     })
     Create("TextLabel", {
         Parent = Notif, Text = desc, Font = Enum.Font.Gotham, TextSize = 11,
-        TextColor3 = SubTextColor, BackgroundTransparency = 1,
+        TextColor3 = Colors.SubText, BackgroundTransparency = 1,
         Position = UDim2.new(0, 50, 0, 30), Size = UDim2.new(1, -60, 0, 22),
         TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true,
         TextTransparency = 1, ZIndex = 202,
@@ -235,25 +223,25 @@ function Library:Notify(options)
     Tween(Stroke, {Transparency = 0.2}, 0.3)
     task.delay(0.05, function()
         for _, d in ipairs(Notif:GetDescendants()) do
-            if d:IsA("TextLabel") or d:IsA("ImageLabel") then
-                Tween(d, {TextTransparency = 0, ImageTransparency = 0}, 0.3)
-            end
+            if d:IsA("TextLabel") then Tween(d, {TextTransparency = 0}, 0.3)
+            elseif d:IsA("ImageLabel") then Tween(d, {ImageTransparency = 0}, 0.3) end
         end
     end)
     task.delay(duration, function()
         Tween(Notif, {BackgroundTransparency = 1}, 0.35)
         Tween(Stroke, {Transparency = 1}, 0.35)
         for _, d in ipairs(Notif:GetDescendants()) do
-            if d:IsA("TextLabel") or d:IsA("ImageLabel") then
-                Tween(d, {TextTransparency = 1, ImageTransparency = 1}, 0.35)
-            end
+            if d:IsA("TextLabel") then Tween(d, {TextTransparency = 1}, 0.35)
+            elseif d:IsA("ImageLabel") then Tween(d, {ImageTransparency = 1}, 0.35) end
         end
         task.wait(0.4)
         Notif:Destroy()
     end)
 end
 
--- Экспорт для дальнейших частей
+-- ============================================================
+-- Export Internal
+-- ============================================================
 Library._Internal = {
     Create = Create,
     Tween = Tween,
@@ -261,20 +249,8 @@ Library._Internal = {
     MakeDraggable = MakeDraggable,
     CreateIcon = CreateIcon,
     ICONS = ICONS,
-    Colors = {
-        Accent = AccentColor,
-        AccentLight = AccentColorLight,
-        Background = BackgroundColor,
-        Card = CardColor,
-        Item = ItemColor,
-        Hover = HoverColor,
-        Text = TextColor,
-        SubText = SubTextColor,
-        Stroke = StrokeColor,
-        Danger = DangerColor,
-        Success = SuccessColor,
-        Warning = WarningColor,
-    },
+    Colors = Colors,
+    SafeCopy = SafeCopy,
     FileSystem = {
         isfolder = _isfolder,
         makefolder = _makefolder,
@@ -283,11 +259,9 @@ Library._Internal = {
         listfiles = _listfiles,
         delfile = _delfile,
     },
-    SafeCopy = SafeCopy,
-    GetNotifContainer = function() return GlobalNotifContainer end,
     SetNotifContainer = function(c) GlobalNotifContainer = c end,
 }-- ============================================================
--- CREATE WINDOW (с иконками в топбаре)
+-- CREATE WINDOW
 -- ============================================================
 local _I = Library._Internal
 local Create = _I.Create
@@ -311,24 +285,21 @@ function Library:CreateWindow(options)
         hubName = options
     end
 
-    local uniqueID = game:GetService("HttpService"):GenerateGUID(false)
+    local uniqueID = HttpService:GenerateGUID(false)
     local ScreenGui = Create("ScreenGui", {
         Name = "Sensei_UI_" .. uniqueID,
-        Parent = game:GetService("RunService"):IsStudio()
+        Parent = RunService:IsStudio()
             and LocalPlayer:WaitForChild("PlayerGui")
-            or game:GetService("CoreGui"),
+            or CoreGui,
         ResetOnSpawn = false,
         IgnoreGuiInset = true,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     })
     if syn and syn.protect_gui then pcall(function() syn.protect_gui(ScreenGui) end) end
 
-    -- ========================================================
-    -- NOTIFICATIONS CONTAINER
-    -- ========================================================
+    -- Notifications
     local NotifContainer = Create("Frame", {
-        Parent = ScreenGui,
-        BackgroundTransparency = 1,
+        Parent = ScreenGui, BackgroundTransparency = 1,
         Size = UDim2.new(0, 260, 0, 300),
         Position = UDim2.new(1, -270, 0, 12),
         ZIndex = 200, Active = false,
@@ -342,49 +313,34 @@ function Library:CreateWindow(options)
     })
     _I.SetNotifContainer(NotifContainer)
 
-    -- ========================================================
-    -- MAIN FRAME
-    -- ========================================================
+    -- MainFrame
     local MainFrame = Create("Frame", {
-        Parent = ScreenGui,
-        BackgroundColor3 = C.Background,
+        Parent = ScreenGui, BackgroundColor3 = C.Background,
         Size = UDim2.new(0, 520, 0, 320),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        ClipsDescendants = true,
-        BackgroundTransparency = 0,
-        Active = true,
-        ZIndex = 5,
+        ClipsDescendants = true, BackgroundTransparency = 0,
+        Active = true, ZIndex = 5,
     })
     local MainScale = Create("UIScale", {Parent = MainFrame, Scale = 0.85})
     Create("UICorner", {Parent = MainFrame, CornerRadius = UDim.new(0, 12)})
-    local MainStroke = Create("UIStroke", {
+    Create("UIStroke", {
         Parent = MainFrame, Color = C.Stroke, Thickness = 1.4, Transparency = 0.2,
     })
     Tween(MainScale, {Scale = 1}, 0.5)
 
-    -- ========================================================
-    -- MINIBAR (Delta-style)
-    -- ========================================================
+    -- Minibar
     local Minibar = Create("Frame", {
-        Parent = ScreenGui,
-        BackgroundColor3 = C.Card,
+        Parent = ScreenGui, BackgroundColor3 = C.Card,
         Size = UDim2.new(0, 180, 0, 44),
         Position = UDim2.new(0.5, -90, 1, -80),
         Visible = false, Active = true, ZIndex = 10,
     })
     Create("UICorner", {Parent = Minibar, CornerRadius = UDim.new(0, 12)})
-    local MinibarStroke = Create("UIStroke", {
+    Create("UIStroke", {
         Parent = Minibar, Color = C.Accent, Thickness = 1.4, Transparency = 0.2,
     })
-
-    -- Иконка-молния
-    Create("ImageLabel", {
-        Parent = Minibar, BackgroundTransparency = 1,
-        Size = UDim2.new(0, 22, 0, 22),
-        Position = UDim2.new(0, 12, 0.5, -11),
-        Image = ICONS.Settings, ImageColor3 = C.Accent,
-    })
+    CreateIcon(Minibar, ICONS.Settings, 22, UDim2.new(0, 12, 0.5, -11), C.Accent, 10)
     Create("TextLabel", {
         Parent = Minibar, BackgroundTransparency = 1,
         Size = UDim2.new(1, -80, 1, 0),
@@ -394,14 +350,12 @@ function Library:CreateWindow(options)
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
     })
-    -- Кнопка развернуть (иконка)
     local MinibarExpand = Create("TextButton", {
         Parent = Minibar,
         Size = UDim2.new(0, 30, 0, 30),
         Position = UDim2.new(1, -36, 0.5, -15),
-        BackgroundColor3 = C.Item,
-        Text = "", AutoButtonColor = false, BorderSizePixel = 0,
-        ZIndex = 11,
+        BackgroundColor3 = C.Item, Text = "",
+        AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 11,
     })
     Create("UICorner", {Parent = MinibarExpand, CornerRadius = UDim.new(0, 8)})
     CreateIcon(MinibarExpand, ICONS.Expand, 16, UDim2.new(0.5, -8, 0.5, -8), C.Accent, 12)
@@ -416,19 +370,15 @@ function Library:CreateWindow(options)
         Tween(MainFrame, {BackgroundTransparency = 0}, 0.35)
     end)
 
-    -- ========================================================
-    -- TOPBAR
-    -- ========================================================
+    -- TopBar
     local TopBar = Create("Frame", {
-        Parent = MainFrame,
-        BackgroundColor3 = C.Card,
+        Parent = MainFrame, BackgroundColor3 = C.Card,
         BackgroundTransparency = 0.15,
         Size = UDim2.new(1, 0, 0, 42),
         Position = UDim2.new(0, 0, 0, 0),
         Active = true, BorderSizePixel = 0, ZIndex = 6,
     })
     Create("UICorner", {Parent = TopBar, CornerRadius = UDim.new(0, 12)})
-    -- нижняя полоска, чтобы углы снизу не скруглялись
     Create("Frame", {
         Parent = TopBar, BackgroundColor3 = C.Card,
         BackgroundTransparency = 0.15, BorderSizePixel = 0,
@@ -437,34 +387,30 @@ function Library:CreateWindow(options)
     })
     MakeDraggable(TopBar, MainFrame)
 
-    -- Иконка-логотип слева
     CreateIcon(TopBar, ICONS.Settings, 20, UDim2.new(0, 14, 0.5, -10), C.Accent, 8)
 
-    -- Заголовок
     local TitleContainer = Create("Frame", {
         Parent = TopBar, BackgroundTransparency = 1,
         Size = UDim2.new(0, 250, 1, 0),
         Position = UDim2.new(0, 42, 0, 0), ZIndex = 7,
     })
     Create("TextLabel", {
-        Parent = TitleContainer,
-        Text = hubName, Font = Enum.Font.GothamBold, TextSize = 14,
+        Parent = TitleContainer, Text = hubName,
+        Font = Enum.Font.GothamBold, TextSize = 14,
         TextColor3 = C.Text, BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 0, 5), Size = UDim2.new(1, 0, 0, 16),
         TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7,
     })
     Create("TextLabel", {
-        Parent = TitleContainer,
-        Text = subText, Font = Enum.Font.Gotham, TextSize = 10,
+        Parent = TitleContainer, Text = subText,
+        Font = Enum.Font.Gotham, TextSize = 10,
         TextColor3 = subColor, BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 0, 22), Size = UDim2.new(1, 0, 0, 12),
         TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7,
     })
 
-    -- Кнопка "Свернуть" с иконкой
     local MinBtn = Create("TextButton", {
-        Parent = TopBar, Text = "",
-        BackgroundColor3 = C.Item,
+        Parent = TopBar, Text = "", BackgroundColor3 = C.Item,
         Size = UDim2.new(0, 30, 0, 30),
         Position = UDim2.new(1, -74, 0.5, -15),
         AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 7,
@@ -473,10 +419,8 @@ function Library:CreateWindow(options)
     CreateIcon(MinBtn, ICONS.Minimize, 16, UDim2.new(0.5, -8, 0.5, -8), C.Warning, 8)
     AddBounce(MinBtn)
 
-    -- Кнопка "Закрыть" с иконкой
     local CloseBtn = Create("TextButton", {
-        Parent = TopBar, Text = "",
-        BackgroundColor3 = C.Item,
+        Parent = TopBar, Text = "", BackgroundColor3 = C.Item,
         Size = UDim2.new(0, 30, 0, 30),
         Position = UDim2.new(1, -40, 0.5, -15),
         AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 7,
@@ -485,7 +429,6 @@ function Library:CreateWindow(options)
     CreateIcon(CloseBtn, ICONS.Close, 16, UDim2.new(0.5, -8, 0.5, -8), C.Danger, 8)
     AddBounce(CloseBtn)
 
-    -- Свернуть
     MinBtn.MouseButton1Click:Connect(function()
         Minibar.Position = UDim2.new(
             MainFrame.Position.X.Scale,
@@ -501,7 +444,6 @@ function Library:CreateWindow(options)
         Tween(Minibar, {Size = UDim2.new(0, 180, 0, 44)}, 0.3)
     end)
 
-    -- Закрыть
     CloseBtn.MouseButton1Click:Connect(function()
         Tween(MainScale, {Scale = 0.85}, 0.3)
         Tween(MainFrame, {BackgroundTransparency = 1}, 0.3)
@@ -509,12 +451,9 @@ function Library:CreateWindow(options)
         ScreenGui:Destroy()
     end)
 
-    -- ========================================================
-    -- SIDEBAR
-    -- ========================================================
+    -- Sidebar
     local Sidebar = Create("Frame", {
-        Parent = MainFrame,
-        BackgroundColor3 = C.Card,
+        Parent = MainFrame, BackgroundColor3 = C.Card,
         BackgroundTransparency = 0.15,
         Size = UDim2.new(0, 130, 1, -42),
         Position = UDim2.new(0, 0, 0, 42),
@@ -538,16 +477,13 @@ function Library:CreateWindow(options)
         TabContainer.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y + 10)
     end)
 
-    -- Разделитель
     Create("Frame", {
         Parent = MainFrame, BackgroundColor3 = C.Stroke,
         BorderSizePixel = 0, Size = UDim2.new(0, 1, 1, -42),
         Position = UDim2.new(0, 130, 0, 42), ZIndex = 6,
     })
 
-    -- ========================================================
-    -- CONTENT AREA
-    -- ========================================================
+    -- ContentArea
     local ContentArea = Create("Frame", {
         Parent = MainFrame, BackgroundTransparency = 1,
         Size = UDim2.new(1, -135, 1, -42),
@@ -557,19 +493,15 @@ function Library:CreateWindow(options)
     Create("UIPadding", {
         Parent = ContentArea,
         PaddingTop = UDim.new(0, 12),
-        PaddingBottom = UDim2.new(0, 12),
-        PaddingLeft = UDim2.new(0, 12),
-        PaddingRight = UDim2.new(0, 12),
+        PaddingBottom = UDim.new(0, 12),
+        PaddingLeft = UDim.new(0, 12),
+        PaddingRight = UDim.new(0, 12),
     })
 
-    -- ========================================================
-    -- WINDOW API
-    -- ========================================================
     local Window = {
         CurrentTab = nil,
         Tabs = {},
         MainFrame = MainFrame,
-        ConfigElements = {},
         ScreenGui = ScreenGui,
         _refs = {
             TabContainer = TabContainer,
@@ -578,23 +510,11 @@ function Library:CreateWindow(options)
         },
     }
 
-    function Window:SetTransparency(val)
-        Tween(MainFrame, {BackgroundTransparency = val}, 0.3)
-    end
-
     return Window
 end-- ============================================================
 -- TAB / PAGE / SECTION
 -- ============================================================
 local function AttachTabMethods(Window)
-    local _I = Library._Internal
-    local Create = _I.Create
-    local Tween = _I.Tween
-    local AddBounce = _I.AddBounce
-    local CreateIcon = _I.CreateIcon
-    local ICONS = _I.ICONS
-    local C = _I.Colors
-
     local TabContainer = Window._refs.TabContainer
     local ContentArea  = Window._refs.ContentArea
 
@@ -621,7 +541,6 @@ local function AttachTabMethods(Window)
         Create("UICorner", {Parent = TabBtn, CornerRadius = UDim.new(0, 8)})
         AddBounce(TabBtn, 0.97)
 
-        -- Индикатор слева
         local Indicator = Create("Frame", {
             Parent = TabBtn,
             BackgroundColor3 = isLocked and C.Warning or C.Accent,
@@ -642,18 +561,15 @@ local function AttachTabMethods(Window)
             TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 9,
         })
 
-        -- Замок для премиум-таба
         if isLocked then
             CreateIcon(TabBtn, ICONS.Lock, 14, UDim2.new(1, -22, 0.5, -7), C.Warning, 9)
         end
 
-        -- Контент таба
         local TabContent = Create("Frame", {
             Parent = ContentArea, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0), Visible = false, ZIndex = 7,
         })
 
-        -- Навигация страниц
         local PageNav = Create("Frame", {
             Parent = TabContent, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 30), ZIndex = 8,
@@ -697,7 +613,6 @@ local function AttachTabMethods(Window)
 
             Window.CurrentTab = TabConfig
             TabConfig.Content.Visible = true
-            -- Плавный выезд контента
             TabConfig.Content.Position = UDim2.new(0, 0, 0, 15)
             Tween(TabConfig.Content, {Position = UDim2.new(0, 0, 0, 0)}, 0.35)
 
@@ -733,21 +648,17 @@ local function AttachTabMethods(Window)
                 Size = UDim2.new(0, 0, 0, 2),
                 Position = UDim2.new(0.5, 0, 1, -4),
                 AnchorPoint = Vector2.new(0.5, 0),
-                BackgroundTransparency = 1, BorderSizePixel = 0,
-                ZIndex = 9,
+                BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 9,
             })
             local PageScroll = Create("ScrollingFrame", {
                 Parent = PageContainer, BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 1, 0),
                 Position = UDim2.new(0, 0, 0, 0),
-                ScrollBarThickness = 3,
-                ScrollBarImageColor3 = C.Stroke,
+                ScrollBarThickness = 3, ScrollBarImageColor3 = C.Stroke,
                 Visible = false, BorderSizePixel = 0,
-                CanvasSize = UDim2.new(0, 0, 0, 0),
-                ZIndex = 8,
+                CanvasSize = UDim2.new(0, 0, 0, 0), ZIndex = 8,
             })
 
-            -- ДВЕ КОЛОНКИ
             local LeftColumn = Create("Frame", {
                 Parent = PageScroll, BackgroundTransparency = 1,
                 Size = UDim2.new(0.5, -5, 1, 0), ZIndex = 9,
@@ -809,7 +720,7 @@ local function AttachTabMethods(Window)
             end
 
             -- ============================================
-            -- CreateSection (ZX-стиль)
+            -- CreateSection
             -- ============================================
             function PageObj:CreateSection(sectionName)
                 sectionName = sectionName or "Section"
@@ -817,8 +728,7 @@ local function AttachTabMethods(Window)
                 PageObj._side = (PageObj._side == "left") and "right" or "left"
 
                 local SectionContainer = Create("Frame", {
-                    Parent = targetCol,
-                    BackgroundColor3 = C.Card,
+                    Parent = targetCol, BackgroundColor3 = C.Card,
                     Size = UDim2.new(1, 0, 0, 32),
                     AutomaticSize = Enum.AutomaticSize.Y,
                     ClipsDescendants = true,
@@ -830,7 +740,6 @@ local function AttachTabMethods(Window)
                     Thickness = 1, Transparency = 0.5,
                 })
 
-                -- Заголовок секции с цветной полоской
                 local TitleRow = Create("Frame", {
                     Parent = SectionContainer, BackgroundTransparency = 1,
                     Size = UDim2.new(1, 0, 0, 32), ZIndex = 9,
@@ -854,15 +763,14 @@ local function AttachTabMethods(Window)
                     Parent = SectionContainer, BackgroundTransparency = 1,
                     Size = UDim2.new(1, 0, 0, 0),
                     Position = UDim2.new(0, 0, 0, 32),
-                    AutomaticSize = Enum.AutomaticSize.Y,
-                    ZIndex = 9,
+                    AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 9,
                 })
                 Create("UIPadding", {
                     Parent = ItemContainer,
                     PaddingTop = UDim.new(0, 8),
                     PaddingBottom = UDim.new(0, 12),
                     PaddingLeft = UDim.new(0, 12),
-                    PaddingRight = UDim2.new(0, 12),
+                    PaddingRight = UDim.new(0, 12),
                 })
                 Create("UIListLayout", {
                     Parent = ItemContainer,
@@ -892,20 +800,10 @@ local function AttachTabMethods(Window)
     end
 end
 
--- Экспорт функции для Части 10
 Library._Internal.AttachTabMethods = AttachTabMethods-- ============================================================
 -- БАЗОВЫЕ КОМПОНЕНТЫ
 -- ============================================================
 local function AttachBasicComponents(Elements)
-    local _I = Library._Internal
-    local Create = _I.Create
-    local Tween = _I.Tween
-    local AddBounce = _I.AddBounce
-    local CreateIcon = _I.CreateIcon
-    local ICONS = _I.ICONS
-    local C = _I.Colors
-    local SafeCopy = _I.SafeCopy
-
     local ItemContainer = Elements._ItemContainer
 
     -- ========================================================
@@ -918,8 +816,7 @@ local function AttachBasicComponents(Elements)
             TextColor3 = C.Text, BackgroundColor3 = C.Item,
             Size = UDim2.new(1, 0, 0, 34),
             AutoButtonColor = false, BorderSizePixel = 0,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            ZIndex = 10,
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10,
         })
         Create("UICorner", {Parent = Btn, CornerRadius = UDim.new(0, 8)})
         Create("UIStroke", {
@@ -942,14 +839,12 @@ local function AttachBasicComponents(Elements)
             TextColor3 = C.Text, BackgroundColor3 = C.Item,
             Size = UDim2.new(1, 0, 0, 34),
             AutoButtonColor = false, BorderSizePixel = 0,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            ZIndex = 10,
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10,
         })
         Create("UICorner", {Parent = Btn, CornerRadius = UDim.new(0, 8)})
         Create("UIStroke", {
             Parent = Btn, Color = C.Stroke, Thickness = 1, Transparency = 0.6,
         })
-        -- Иконка копирования справа
         CreateIcon(Btn, ICONS.Copy, 16, UDim2.new(1, -24, 0.5, -8), C.Accent, 11)
         AddBounce(Btn)
         Btn.MouseButton1Click:Connect(function()
@@ -1152,7 +1047,6 @@ local function AttachBasicComponents(Elements)
             Parent = MainBtn, Color = C.Stroke, Thickness = 1, Transparency = 0.6,
         })
         AddBounce(MainBtn, 0.98)
-        -- Стрелка справа
         local Arrow = Create("TextLabel", {
             Parent = MainBtn, Text = "▼",
             Font = Enum.Font.GothamBold, TextSize = 10,
@@ -1165,8 +1059,7 @@ local function AttachBasicComponents(Elements)
             Size = UDim2.new(1, 0, 0, 0),
             Position = UDim2.new(0, 0, 0, 50),
             CanvasSize = UDim2.new(0, 0, 0, #options * 28),
-            ScrollBarThickness = 2,
-            ScrollBarImageColor3 = C.Stroke,
+            ScrollBarThickness = 2, ScrollBarImageColor3 = C.Stroke,
             BorderSizePixel = 0, Visible = false, ZIndex = 11,
         })
         Create("UICorner", {Parent = ListFrame, CornerRadius = UDim.new(0, 8)})
@@ -1345,14 +1238,6 @@ Library._Internal.AttachBasicComponents = AttachBasicComponents-- ==============
 -- ПРОДВИНУТЫЕ КОМПОНЕНТЫ (часть 1)
 -- ============================================================
 local function AttachAdvancedComponents1(Elements)
-    local _I = Library._Internal
-    local Create = _I.Create
-    local Tween = _I.Tween
-    local AddBounce = _I.AddBounce
-    local CreateIcon = _I.CreateIcon
-    local ICONS = _I.ICONS
-    local C = _I.Colors
-
     local ItemContainer = Elements._ItemContainer
 
     -- ========================================================
@@ -1374,8 +1259,7 @@ local function AttachAdvancedComponents1(Elements)
             TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10,
         })
         local KeyBtn = Create("TextButton", {
-            Parent = Frame,
-            Text = currentKey and currentKey.Name or "None",
+            Parent = Frame, Text = currentKey and currentKey.Name or "None",
             Font = Enum.Font.GothamBold, TextSize = 11,
             TextColor3 = C.Accent, BackgroundColor3 = C.Item,
             Size = UDim2.new(0, 64, 0, 24),
@@ -1478,7 +1362,7 @@ local function AttachAdvancedComponents1(Elements)
     end
 
     -- ========================================================
-    -- AddStepper (с иконками +/−)
+    -- AddStepper
     -- ========================================================
     function Elements:AddStepper(name, min, max, default, callback)
         min = min or 0; max = max or 10
@@ -1495,7 +1379,6 @@ local function AttachAdvancedComponents1(Elements)
             Position = UDim2.new(0, 2, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10,
         })
-        -- Минус
         local Minus = Create("TextButton", {
             Parent = Frame, Text = "−",
             Font = Enum.Font.GothamBold, TextSize = 16,
@@ -1509,7 +1392,6 @@ local function AttachAdvancedComponents1(Elements)
             Parent = Minus, Color = C.Stroke, Thickness = 1, Transparency = 0.6,
         })
         AddBounce(Minus)
-        -- Значение
         local ValLbl = Create("TextLabel", {
             Parent = Frame, Text = tostring(val),
             Font = Enum.Font.GothamBold, TextSize = 13,
@@ -1518,7 +1400,6 @@ local function AttachAdvancedComponents1(Elements)
             Position = UDim2.new(1, -80, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 10,
         })
-        -- Плюс
         local Plus = Create("TextButton", {
             Parent = Frame, Text = "+",
             Font = Enum.Font.GothamBold, TextSize = 16,
@@ -1616,18 +1497,10 @@ Library._Internal.AttachAdvancedComponents1 = AttachAdvancedComponents1-- ======
 -- ПРОДВИНУТЫЕ КОМПОНЕНТЫ (часть 2)
 -- ============================================================
 local function AttachAdvancedComponents2(Elements)
-    local _I = Library._Internal
-    local Create = _I.Create
-    local Tween = _I.Tween
-    local AddBounce = _I.AddBounce
-    local CreateIcon = _I.CreateIcon
-    local ICONS = _I.ICONS
-    local C = _I.Colors
-
     local ItemContainer = Elements._ItemContainer
 
     -- ========================================================
-    -- AddColorPicker (HSV, ZX-стиль)
+    -- AddColorPicker
     -- ========================================================
     function Elements:AddColorPicker(name, defaultColor, callback)
         local color = defaultColor or C.Accent
@@ -1676,7 +1549,6 @@ local function AttachAdvancedComponents2(Elements)
             AutoButtonColor = false, BorderSizePixel = 0, ZIndex = 11,
         })
         Create("UICorner", {Parent = SVMap, CornerRadius = UDim.new(0, 6)})
-        -- Белый градиент (S)
         local WhiteGrad = Create("Frame", {
             Parent = SVMap, BackgroundColor3 = Color3.new(1,1,1),
             Size = UDim2.new(1,0,1,0), BorderSizePixel = 0, ZIndex = 12,
@@ -1689,7 +1561,6 @@ local function AttachAdvancedComponents2(Elements)
             }),
         })
         Create("UICorner", {Parent = WhiteGrad, CornerRadius = UDim.new(0, 6)})
-        -- Чёрный градиент (V)
         local BlackGrad = Create("Frame", {
             Parent = SVMap, BackgroundColor3 = Color3.new(0,0,0),
             Size = UDim2.new(1,0,1,0), BorderSizePixel = 0, ZIndex = 13,
@@ -1702,7 +1573,6 @@ local function AttachAdvancedComponents2(Elements)
             }),
         })
         Create("UICorner", {Parent = BlackGrad, CornerRadius = UDim.new(0, 6)})
-        -- Маркер SV
         local SVRing = Create("Frame", {
             Parent = SVMap, BackgroundColor3 = Color3.new(1,1,1),
             Size = UDim2.new(0, 10, 0, 10),
@@ -1712,7 +1582,6 @@ local function AttachAdvancedComponents2(Elements)
         })
         Create("UICorner", {Parent = SVRing, CornerRadius = UDim.new(1, 0)})
         Create("UIStroke", {Parent = SVRing, Color = Color3.new(0,0,0), Thickness = 1})
-        -- Hue bar
         local HueBar = Create("TextButton", {
             Parent = PickerArea, Text = "",
             BackgroundColor3 = Color3.new(1,1,1),
@@ -1815,7 +1684,7 @@ local function AttachAdvancedComponents2(Elements)
     end
 
     -- ========================================================
-    -- AddLoader (крутящийся спиннер)
+    -- AddLoader
     -- ========================================================
     function Elements:AddLoader(name)
         local Frame = Create("Frame", {
@@ -1862,7 +1731,7 @@ local function AttachAdvancedComponents2(Elements)
         task.spawn(function()
             while Ring.Parent do
                 Ring.Rotation = (Ring.Rotation + 6) % 360
-                game:GetService("RunService").Heartbeat:Wait()
+                RunService.Heartbeat:Wait()
             end
         end)
         return Frame
@@ -1886,7 +1755,7 @@ local function AttachAdvancedComponents2(Elements)
     end
 
     -- ========================================================
-    -- AddDividerText (линия + текст по центру)
+    -- AddDividerText
     -- ========================================================
     function Elements:AddDividerText(text)
         local Wrap = Create("Frame", {
@@ -1894,14 +1763,12 @@ local function AttachAdvancedComponents2(Elements)
             Size = UDim2.new(1, 0, 0, 20), ZIndex = 9,
         })
         Create("Frame", {
-            Parent = Wrap, BackgroundColor3 = C.Stroke,
-            BorderSizePixel = 0,
+            Parent = Wrap, BackgroundColor3 = C.Stroke, BorderSizePixel = 0,
             Size = UDim2.new(0.4, 0, 0, 1),
             Position = UDim2.new(0, 0, 0.5, 0), ZIndex = 9,
         })
         Create("Frame", {
-            Parent = Wrap, BackgroundColor3 = C.Stroke,
-            BorderSizePixel = 0,
+            Parent = Wrap, BackgroundColor3 = C.Stroke, BorderSizePixel = 0,
             Size = UDim2.new(0.4, 0, 0, 1),
             Position = UDim2.new(0.6, 0, 0.5, 0), ZIndex = 9,
         })
@@ -1932,7 +1799,7 @@ local function AttachAdvancedComponents2(Elements)
     end
 
     -- ========================================================
-    -- AddParagraph (карточка с текстом)
+    -- AddParagraph
     -- ========================================================
     function Elements:AddParagraph(title, content)
         local Card = Create("Frame", {
@@ -1943,8 +1810,7 @@ local function AttachAdvancedComponents2(Elements)
         })
         Create("UICorner", {Parent = Card, CornerRadius = UDim.new(0, 8)})
         Create("UIStroke", {
-            Parent = Card, Color = C.Stroke,
-            Thickness = 1, Transparency = 0.6,
+            Parent = Card, Color = C.Stroke, Thickness = 1, Transparency = 0.6,
         })
         Create("UIPadding", {
             Parent = Card,
@@ -1985,16 +1851,8 @@ Library._Internal.AttachAdvancedComponents2 = AttachAdvancedComponents2-- ======
 -- CONFIG MANAGER
 -- ============================================================
 local function AttachConfigManager(Elements)
-    local _I = Library._Internal
-    local Create = _I.Create
-    local Tween = _I.Tween
-    local AddBounce = _I.AddBounce
-    local CreateIcon = _I.CreateIcon
-    local ICONS = _I.ICONS
-    local C = _I.Colors
-    local FS = _I.FileSystem
-
     local ItemContainer = Elements._ItemContainer
+    local FS = Library._Internal.FileSystem
 
     function Elements:AddConfigManager(folderName)
         folderName = folderName or "SenseiConfigs"
@@ -2028,8 +1886,7 @@ local function AttachConfigManager(Elements)
             Parent = ManagerFrame, BackgroundColor3 = C.Background,
             Size = UDim2.new(1, 0, 0, 115),
             Position = UDim2.new(0, 0, 0, 38),
-            ScrollBarThickness = 3,
-            ScrollBarImageColor3 = C.Stroke,
+            ScrollBarThickness = 3, ScrollBarImageColor3 = C.Stroke,
             BorderSizePixel = 0,
             CanvasSize = UDim2.new(0, 0, 0, 0), ZIndex = 10,
         })
@@ -2130,7 +1987,7 @@ local function AttachConfigManager(Elements)
         Create("UICorner", {Parent = CancelActionBtn, CornerRadius = UDim.new(0, 8)})
         AddBounce(CancelActionBtn)
 
-        -- Всплывающее подтверждение удаления
+        -- Всплывающее подтверждение
         local ConfirmPopup = Create("Frame", {
             Parent = ManagerFrame, BackgroundColor3 = C.Background,
             Size = UDim2.new(1, -20, 1, -20),
@@ -2278,7 +2135,7 @@ local function AttachConfigManager(Elements)
                     LoadBtn.MouseButton1Click:Connect(function()
                         if deleteMode or editMode then return end
                         local ok, data = pcall(function()
-                            return game:GetService("HttpService"):JSONDecode(FS.readfile(filepath))
+                            return HttpService:JSONDecode(FS.readfile(filepath))
                         end)
                         if ok and type(data) == "table" then
                             for k, val in pairs(data) do
@@ -2317,7 +2174,7 @@ local function AttachConfigManager(Elements)
                 end
             end
             local ok, encoded = pcall(function()
-                return game:GetService("HttpService"):JSONEncode(payload)
+                return HttpService:JSONEncode(payload)
             end)
             if not ok then
                 Library:Notify({Title = "Ошибка", Description = "Не удалось сохранить.", Kind = "error"})
@@ -2417,18 +2274,9 @@ local function AttachConfigManager(Elements)
 end
 
 Library._Internal.AttachConfigManager = AttachConfigManager-- ============================================================
--- ДОПОЛНИТЕЛЬНЫЕ УТИЛИТЫ
--- (PlayerList, SetTheme, SetTransparency, Confirm-диалог)
+-- ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ (PlayerList)
 -- ============================================================
 local function AttachExtraMethods(Elements)
-    local _I = Library._Internal
-    local Create = _I.Create
-    local Tween = _I.Tween
-    local AddBounce = _I.AddBounce
-    local CreateIcon = _I.CreateIcon
-    local ICONS = _I.ICONS
-    local C = _I.Colors
-
     local ItemContainer = Elements._ItemContainer
 
     -- ========================================================
@@ -2486,7 +2334,6 @@ local function AttachExtraMethods(Elements)
         end
         refresh()
 
-        -- Кнопка обновить
         local RefreshBtn = Create("TextButton", {
             Parent = Holder, Text = "Обновить",
             Font = Enum.Font.GothamBold, TextSize = 11,
@@ -2508,90 +2355,28 @@ end
 
 Library._Internal.AttachExtraMethods = AttachExtraMethods
 
+
 -- ============================================================
--- ФИНАЛЬНЫЙ ПАТЧ (правильный порядок применения)
--- ============================================================
-local _origCreateWindow = Library.CreateWindow
-function Library:CreateWindow(opts)
-    local w = _origCreateWindow(self, opts)
-
-    -- 1. Навешиваем методы Tab/Page/Section
-    _I.AttachTabMethods(w)
-
-    -- 2. Оборачиваем CreateTab → CreatePage → CreateSection
-    --    чтобы внутри CreateSection появились ВСЕ компоненты
-    local _origCreateTab = w.CreateTab
-    function w:CreateTab(...)
-        local tab = _origCreateTab(self, ...)
-
-        local _origCreatePage = tab.CreatePage
-        function tab:CreatePage(...)
-            local page = _origCreatePage(self, ...)
-
-            local _origCreateSection = page.CreateSection
-            function page:CreateSection(...)
-                local elements = _origCreateSection(self, ...)
-
-                -- Приклеиваем ВСЕ наборы компонентов
-                _I.AttachBasicComponents(elements)
-                _I.AttachAdvancedComponents1(elements)
-                _I.AttachAdvancedComponents2(elements)
-                _I.AttachConfigManager(elements)
-                _I.AttachExtraMethods(elements)
-
-                return elements
-            end
-            return page
-        end
-        return tab
-    end
-
-    return w
-end-- ============================================================
--- ПУБЛИЧНЫЕ МЕТОДЫ WINDOW
--- (SetTheme, SetTransparency, Confirm, Destroy)
+-- ПУБЛИЧНЫЕ МЕТОДЫ WINDOW (SetTheme, SetTransparency, Confirm, Destroy)
 -- ============================================================
 local function AttachWindowPublicMethods(Window)
-    local _I = Library._Internal
-    local Create = _I.Create
-    local Tween = _I.Tween
-    local AddBounce = _I.AddBounce
-    local CreateIcon = _I.CreateIcon
-    local ICONS = _I.ICONS
-    local C = _I.Colors
-
-    -- ========================================================
-    -- SetTheme (смена акцента)
-    -- ========================================================
     function Window:SetTheme(accentColor)
         if typeof(accentColor) ~= "Color3" then return end
         C.Accent = accentColor
         C.AccentLight = accentColor:Lerp(Color3.new(1,1,1), 0.4)
-
-        -- Обновляем табы
-        if self.CurrentTab then
-            Tween(self.CurrentTab.Indicator, {BackgroundColor3 = accentColor}, 0.3)
-        end
-        -- Обновляем все компоненты через UpdateTheme
-        for _, el in ipairs(self.Elements or {}) do
-            if el.UpdateTheme then pcall(el.UpdateTheme, accentColor) end
+        if Window.CurrentTab then
+            Tween(Window.CurrentTab.Indicator, {BackgroundColor3 = accentColor}, 0.3)
         end
     end
 
-    -- ========================================================
-    -- SetTransparency (прозрачность фона окна)
-    -- ========================================================
     function Window:SetTransparency(val)
         val = math.clamp(val or 0, 0, 0.8)
-        Tween(self.MainFrame, {BackgroundTransparency = val}, 0.3)
+        Tween(Window.MainFrame, {BackgroundTransparency = val}, 0.3)
     end
 
-    -- ========================================================
-    -- Confirm (модальный диалог подтверждения)
-    -- ========================================================
     function Window:Confirm(config)
         config = config or {}
-        local ScreenGui = self.ScreenGui
+        local ScreenGui = Window.ScreenGui
 
         local Backdrop = Create("TextButton", {
             Parent = ScreenGui, Text = "",
@@ -2662,7 +2447,6 @@ local function AttachWindowPublicMethods(Window)
         Create("UICorner", {Parent = No, CornerRadius = UDim.new(0, 8)})
         AddBounce(No)
 
-        -- Анимация появления
         Tween(Popup, {BackgroundTransparency = 0}, 0.3)
         Tween(Popup:FindFirstChildOfClass("UIStroke"), {Transparency = 0.3}, 0.3)
         Tween(Title, {TextTransparency = 0}, 0.3)
@@ -2692,30 +2476,139 @@ local function AttachWindowPublicMethods(Window)
         Backdrop.MouseButton1Click:Connect(function() close(false) end)
     end
 
-    -- ========================================================
-    -- Destroy (полное удаление)
-    -- ========================================================
     function Window:Destroy()
-        if self.ScreenGui then self.ScreenGui:Destroy() end
+        if Window.ScreenGui then Window.ScreenGui:Destroy() end
     end
 end
 
 Library._Internal.AttachWindowPublicMethods = AttachWindowPublicMethods-- ============================================================
+-- ДОПОЛНИТЕЛЬНЫЕ УТИЛИТЫ
+-- (AddTabIcon, AddSectionIcon, поиск, тумблер темы)
+-- ============================================================
+
+-- ============================================================
+-- Функция: AddTabIcon — установить иконку на таб
+-- Использование: win:SetTabIcon("Main", "rbxassetid://...")
+-- ============================================================
+local function AttachTabIconMethods(Window)
+    function Window:SetTabIcon(tabName, iconId)
+        for _, tab in ipairs(Window.Tabs) do
+            if tab.Button and tab.Button:FindFirstChild("TabIcon") == nil then
+                if tab.Txt and tab.Txt.Text == tabName then
+                    local Icon = Create("ImageLabel", {
+                        Parent = tab.Button,
+                        Name = "TabIcon",
+                        BackgroundTransparency = 1,
+                        Image = iconId,
+                        ImageColor3 = C.SubText,
+                        Size = UDim2.new(0, 16, 0, 16),
+                        Position = UDim2.new(0, 12, 0.5, -8),
+                        ZIndex = 10,
+                    })
+                    tab.Txt.Position = UDim2.new(0, 34, 0, 0)
+                    tab.Txt.Size = UDim2.new(1, -60, 1, 0)
+                    tab._Icon = Icon
+                end
+            end
+        end
+    end
+
+    function Window:SetSectionIcon(sectionName, iconId)
+        -- опционально, если хочешь иконки на секциях
+    end
+end
+
+Library._Internal.AttachTabIconMethods = AttachTabIconMethods
+
+
+-- ============================================================
+-- ПУБЛИЧНЫЙ API: готовые функции
+-- ============================================================
+
+-- Библиотека возвращает Library, но также даёт доступ к:
+-- Library:RegisterTheme(name, {Accent = Color3, AccentLight = Color3})
+function Library:RegisterTheme(name, theme)
+    if not name or type(theme) ~= "table" then return end
+    if not Library._Themes then Library._Themes = {} end
+    Library._Themes[name] = theme
+end
+
+-- Библиотека: получить список доступных утилит
+function Library:GetInfo()
+    return {
+        Version = Library.Version,
+        Brand = Library.Brand,
+        Icons = ICONS,
+        Colors = C,
+    }
+end
+
+-- Библиотека: смена темы
+function Library:ApplyTheme(name)
+    if not Library._Themes or not Library._Themes[name] then return end
+    local theme = Library._Themes[name]
+    if theme.Accent then C.Accent = theme.Accent end
+    if theme.AccentLight then C.AccentLight = theme.AccentLight end
+    for _, el in ipairs(Library.ConfigElements or {}) do
+        if el.UpdateTheme then pcall(el.UpdateTheme) end
+    end
+end
+
+-- ============================================================
+-- МИНИ-БАР: дополнительные фичи
+-- ============================================================
+function Library:_SetMinibarHoverable() end -- резерв
+
+-- ============================================================
+-- Anti-detect: удалить дубликат ScreenGui, если он остался
+-- ============================================================
+local function CleanupOldSensei()
+    if not CoreGui then return end
+    for _, child in ipairs(CoreGui:GetChildren()) do
+        if child:IsA("ScreenGui") and child.Name:match("^Sensei_UI_") then
+            local gui = child
+            task.spawn(function()
+                task.wait(0.5)
+                pcall(function() gui:Destroy() end)
+            end)
+        end
+    end
+end
+
+Library._Internal.CleanupOldSensei = CleanupOldSensei
+
+-- ============================================================
+-- Экспорт в getgenv (для повторного запуска)
+-- ============================================================
+if getgenv then
+    getgenv().Sensei = Library
+    getgenv().SenseiVersion = Library.Version
+end-- ============================================================
 -- ФИНАЛЬНЫЙ ПАТЧ CreateWindow
+-- Все Attach-функции применяются в правильном порядке
 -- ============================================================
 local _finalOrigCreateWindow = Library.CreateWindow
 
 function Library:CreateWindow(options)
+    -- Чистим висячие ScreenGui от прошлых запусков
+    if Library._Internal.CleanupOldSensei then
+        pcall(Library._Internal.CleanupOldSensei)
+    end
+
+    -- Создаём окно
     local Window = _finalOrigCreateWindow(self, options)
 
-    -- 1) Прикрепляем публичные методы окна
+    -- 1) Публичные методы окна (SetTheme, SetTransparency, Confirm, Destroy)
     Library._Internal.AttachWindowPublicMethods(Window)
 
-    -- 2) Прикрепляем методы CreateTab / CreatePage / CreateSection
+    -- 2) Методы CreateTab / CreatePage / CreateSection
     Library._Internal.AttachTabMethods(Window)
 
-    -- 3) Оборачиваем цепочку CreateTab → CreatePage → CreateSection,
-    --    чтобы внутри CreateSection приклеивались ВСЕ компоненты
+    -- 3) Методы иконок табов
+    Library._Internal.AttachTabIconMethods(Window)
+
+    -- 4) Оборачиваем цепочку, чтобы при CreateSection
+    --    к Elements приклеивались ВСЕ компоненты
     local origCreateTab = Window.CreateTab
     function Window:CreateTab(...)
         local TabObj = origCreateTab(self, ...)
@@ -2728,7 +2621,7 @@ function Library:CreateWindow(options)
             function PageObj:CreateSection(...)
                 local Elements = origCreateSection(self, ...)
 
-                -- Все наборы компонентов
+                -- Приклеиваем все наборы компонентов
                 Library._Internal.AttachBasicComponents(Elements)
                 Library._Internal.AttachAdvancedComponents1(Elements)
                 Library._Internal.AttachAdvancedComponents2(Elements)
