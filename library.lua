@@ -5,9 +5,6 @@
     Load: local Sensei = loadstring(game:HttpGet("https://raw.githubusercontent.com/glitchmode960-gif/library/main/library.lua"))()
 ]]
 
--- ============================================================
--- SERVICES
--- ============================================================
 local Players          = game:GetService("Players")
 local RunService       = game:GetService("RunService")
 local TweenService     = game:GetService("TweenService")
@@ -18,9 +15,6 @@ local CoreGui          = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- ============================================================
--- LIBRARY OBJECT
--- ============================================================
 local Sensei = {}
 Sensei.__index = Sensei
 Sensei.Version = "1.0.0"
@@ -29,9 +23,6 @@ Sensei.Flags = {}
 Sensei.Windows = {}
 Sensei.Connections = {}
 
--- ============================================================
--- SAFE FILE SYSTEM
--- ============================================================
 local FS = {
     isfolder   = isfolder   or function() return true end,
     makefolder = makefolder or function() end,
@@ -54,9 +45,6 @@ local function SafeWrite(path, data)
     end)
 end
 
--- ============================================================
--- THEMES
--- ============================================================
 local Themes = {}
 
 local function MakeTheme(name, c)
@@ -145,9 +133,6 @@ Themes.Light = MakeTheme("Light", {
 
 local CurrentTheme = Themes.Sensei
 
--- ============================================================
--- ICONS
--- ============================================================
 local Icons = {
     Minimize = "rbxassetid://6031090990",
     Close    = "rbxassetid://6031091004",
@@ -157,9 +142,6 @@ local Icons = {
     Lock     = "rbxassetid://6031082533",
 }
 
--- ============================================================
--- UTILITY: Create
--- ============================================================
 local function Create(className, props)
     local inst = Instance.new(className)
     for k, v in pairs(props or {}) do
@@ -174,9 +156,6 @@ local function Create(className, props)
     return inst
 end
 
--- ============================================================
--- UTILITY: Tween
--- ============================================================
 local function Tween(instance, properties, duration)
     local info = TweenInfo.new(
         duration or 0.25,
@@ -188,9 +167,6 @@ local function Tween(instance, properties, duration)
     return tw
 end
 
--- ============================================================
--- UTILITY: AddBounce
--- ============================================================
 local function AddBounce(button, factor)
     factor = factor or 0.95
     local scale = button:FindFirstChild("UIScale")
@@ -211,9 +187,6 @@ local function AddBounce(button, factor)
     end)
 end
 
--- ============================================================
--- UTILITY: MakeDraggable
--- ============================================================
 local function MakeDraggable(topbar, object)
     topbar.Active = true
     object.Active = true
@@ -252,9 +225,6 @@ local function MakeDraggable(topbar, object)
     end)
 end
 
--- ============================================================
--- UTILITY: CreateIcon
--- ============================================================
 local function CreateIcon(parent, iconId, size, pos, color, zIndex)
     return Create("ImageLabel", {
         Parent = parent,
@@ -267,9 +237,6 @@ local function CreateIcon(parent, iconId, size, pos, color, zIndex)
     })
 end
 
--- ============================================================
--- NOTIFY
--- ============================================================
 local NotifContainer
 
 function Sensei:Notify(options)
@@ -367,9 +334,6 @@ function Sensei:Notify(options)
     end)
 end
 
--- ============================================================
--- THEME API
--- ============================================================
 function Sensei:SetTheme(name)
     if not Themes[name] then return end
     CurrentTheme = Themes[name]
@@ -396,9 +360,6 @@ function Sensei:GetInfo()
     }
 end
 
--- ============================================================
--- EXPORT INTERNAL
--- ============================================================
 Sensei._Internal = {
     Create = Create,
     Tween = Tween,
@@ -422,7 +383,8 @@ Sensei._Internal = {
     SetNotifContainer = function(c) NotifContainer = c end,
     GetCurrentTheme = function() return CurrentTheme end,
     GetThemes = function() return Themes end,
-}-- ============================================================
+}
+-- ============================================================
 -- CREATE WINDOW
 -- ============================================================
 local _I = Sensei._Internal
@@ -437,18 +399,16 @@ local SafeWrite = _I.SafeWrite
 local Services = _I.Services
 local LocalPlayer = Services.LocalPlayer
 local CoreGui = Services.CoreGui
+local Players = Services.Players
 
 function Sensei:CreateWindow(options)
     options = options or {}
 
-    local Title       = options.Title or "Sensei Hub"
-    local SubTitle    = options.SubTitle or "Powered by Sensei"
-    local ScriptFolder= options.ScriptFolder or "sensei"
-    local Size        = options.Size or UDim2.fromOffset(500, 340)
+    local Title        = options.Title or "Sensei Hub"
+    local SubTitle     = options.SubTitle or "Powered by Sensei"
+    local ScriptFolder = options.ScriptFolder or "sensei"
+    local Size         = options.Size or UDim2.fromOffset(500, 340)
 
-    -- ========================================================
-    -- ScreenGui
-    -- ========================================================
     local ScreenGui = Create("ScreenGui", {
         Name = "Sensei_UI_" .. tostring(math.random(100000, 999999)),
         Parent = CoreGui,
@@ -460,9 +420,6 @@ function Sensei:CreateWindow(options)
         pcall(function() syn.protect_gui(ScreenGui) end)
     end
 
-    -- ========================================================
-    -- Notification Container
-    -- ========================================================
     local NotifContainer = Create("Frame", {
         Parent = ScreenGui,
         BackgroundTransparency = 1,
@@ -480,9 +437,6 @@ function Sensei:CreateWindow(options)
     })
     _I.SetNotifContainer(NotifContainer)
 
-    -- ========================================================
-    -- Main Frame
-    -- ========================================================
     local MainFrame = Create("Frame", {
         Parent = ScreenGui,
         BackgroundColor3 = _I.GetCurrentTheme().Background,
@@ -494,7 +448,7 @@ function Sensei:CreateWindow(options)
     })
     local MainScale = Create("UIScale", { Parent = MainFrame, Scale = 1 })
     Create("UICorner", { Parent = MainFrame, CornerRadius = UDim.new(0, 12) })
-    local MainStroke = Create("UIStroke", {
+    Create("UIStroke", {
         Parent = MainFrame,
         Color = _I.GetCurrentTheme().Stroke,
         Thickness = 1.2,
@@ -503,9 +457,6 @@ function Sensei:CreateWindow(options)
 
     MakeDraggable(MainFrame, MainFrame)
 
-    -- ========================================================
-    -- Top Bar
-    -- ========================================================
     local TopBar = Create("Frame", {
         Parent = MainFrame,
         BackgroundColor3 = _I.GetCurrentTheme().Card,
@@ -526,10 +477,8 @@ function Sensei:CreateWindow(options)
     })
     MakeDraggable(TopBar, MainFrame)
 
-    -- Иконка логотипа
     CreateIcon(TopBar, Icons.Settings, 18, UDim2.new(0, 12, 0.5, -9), _I.GetCurrentTheme().Accent, 8)
 
-    -- Заголовок
     local TitleContainer = Create("Frame", {
         Parent = TopBar,
         BackgroundTransparency = 1,
@@ -560,7 +509,6 @@ function Sensei:CreateWindow(options)
         TextXAlignment = Enum.TextXAlignment.Left,
     })
 
-    -- Кнопки минимизации и закрытия
     local MinimizeButton = Create("TextButton", {
         Parent = TopBar,
         Text = "",
@@ -587,9 +535,6 @@ function Sensei:CreateWindow(options)
     CreateIcon(CloseButton, Icons.Close, 14, UDim2.new(0.5, -7, 0.5, -7), _I.GetCurrentTheme().Danger)
     AddBounce(CloseButton)
 
-    -- ========================================================
-    -- Sidebar
-    -- ========================================================
     local Sidebar = Create("Frame", {
         Parent = MainFrame,
         BackgroundColor3 = _I.GetCurrentTheme().Card,
@@ -600,7 +545,6 @@ function Sensei:CreateWindow(options)
         BorderSizePixel = 0,
     })
 
-    -- Аватар + ник игрока
     local ProfileFrame = Create("Frame", {
         Parent = Sidebar,
         BackgroundTransparency = 1,
@@ -655,7 +599,6 @@ function Sensei:CreateWindow(options)
         TextTruncate = Enum.TextTruncate.AtEnd,
     })
 
-    -- Контейнер табов
     local TabContainer = Create("ScrollingFrame", {
         Parent = Sidebar,
         BackgroundTransparency = 1,
@@ -666,16 +609,15 @@ function Sensei:CreateWindow(options)
         BorderSizePixel = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0),
     })
-    Create("UIListLayout", {
+    local TabLayout = Create("UIListLayout", {
         Parent = TabContainer,
         SortOrder = Enum.SortOrder.LayoutOrder,
         Padding = UDim.new(0, 4),
     })
-    TabContainer:GetChildren()[1]:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        TabContainer.CanvasSize = UDim2.new(0, 0, 0, TabContainer:GetChildren()[1].AbsoluteContentSize.Y + 10)
+    TabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        TabContainer.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y + 10)
     end)
 
-    -- Разделитель
     Create("Frame", {
         Parent = MainFrame,
         BackgroundColor3 = _I.GetCurrentTheme().Stroke,
@@ -684,9 +626,6 @@ function Sensei:CreateWindow(options)
         Position = UDim2.new(0, 130, 0, 36),
     })
 
-    -- ========================================================
-    -- Content Area
-    -- ========================================================
     local ContentArea = Create("Frame", {
         Parent = MainFrame,
         BackgroundTransparency = 1,
@@ -695,9 +634,6 @@ function Sensei:CreateWindow(options)
         Active = true,
     })
 
-    -- ========================================================
-    -- Minibar (свернутое окно)
-    -- ========================================================
     local Minibar = Create("Frame", {
         Parent = ScreenGui,
         BackgroundColor3 = _I.GetCurrentTheme().Card,
@@ -754,9 +690,6 @@ function Sensei:CreateWindow(options)
         Tween(MainScale, { Scale = 1 }, 0.3)
     end)
 
-    -- ========================================================
-    -- Минимизация
-    -- ========================================================
     MinimizeButton.MouseButton1Click:Connect(function()
         MainScale.Scale = 0.9
         Tween(MainScale, { Scale = 0.85 }, 0.25)
@@ -766,16 +699,12 @@ function Sensei:CreateWindow(options)
         Minibar.Position = UDim2.new(0.5, -90, 1, -60)
     end)
 
-    -- Закрытие
     CloseButton.MouseButton1Click:Connect(function()
         Tween(MainScale, { Scale = 0.85 }, 0.25)
         task.wait(0.25)
         ScreenGui:Destroy()
     end)
 
-    -- ========================================================
-    -- Window API
-    -- ========================================================
     local Window = {
         Tabs = {},
         CurrentTab = nil,
@@ -826,8 +755,9 @@ function Sensei:CreateWindow(options)
     table.insert(Sensei.Windows, Window)
 
     return Window
-end-- ============================================================
--- ATTACH TAB METHODS
+end
+-- ============================================================
+-- TAB METHODS: CreateTab, CreateSection
 -- ============================================================
 local _I = Sensei._Internal
 local Create = _I.Create
@@ -837,9 +767,6 @@ local CreateIcon = _I.CreateIcon
 local Icons = _I.Icons
 
 local function AttachTabMethods(Window)
-    -- ========================================================
-    -- CreateTab
-    -- ========================================================
     function Window:CreateTab(tabName, tabIcon)
         tabName = tabName or "Tab"
         tabIcon = tabIcon or "Home"
@@ -847,7 +774,6 @@ local function AttachTabMethods(Window)
         local TabContainer = Window.TabContainer
         local ContentArea = Window.ContentArea
 
-        -- Кнопка таба
         local TabBtn = Create("TextButton", {
             Parent = TabContainer,
             Text = "",
@@ -860,7 +786,6 @@ local function AttachTabMethods(Window)
         Create("UICorner", { Parent = TabBtn, CornerRadius = UDim.new(0, 8) })
         AddBounce(TabBtn, 0.97)
 
-        -- Индикатор слева
         local Indicator = Create("Frame", {
             Parent = TabBtn,
             BackgroundColor3 = _I.GetCurrentTheme().Accent,
@@ -871,10 +796,8 @@ local function AttachTabMethods(Window)
         })
         Create("UICorner", { Parent = Indicator, CornerRadius = UDim.new(1, 0) })
 
-        -- Иконка
         local TabIconImg = CreateIcon(TabBtn, Icons.Settings, 14, UDim2.new(0, 10, 0.5, -7), _I.GetCurrentTheme().SubText, 5)
 
-        -- Текст
         local TabText = Create("TextLabel", {
             Parent = TabBtn,
             Text = tabName,
@@ -889,7 +812,6 @@ local function AttachTabMethods(Window)
             ZIndex = 5,
         })
 
-        -- Контейнер для контента таба
         local TabContent = Create("Frame", {
             Parent = ContentArea,
             BackgroundTransparency = 1,
@@ -897,7 +819,6 @@ local function AttachTabMethods(Window)
             Visible = false,
         })
 
-        -- ScrollingFrame внутри контента
         local TabScroll = Create("ScrollingFrame", {
             Parent = TabContent,
             BackgroundTransparency = 1,
@@ -923,7 +844,6 @@ local function AttachTabMethods(Window)
             PaddingRight = UDim.new(0, 2),
         })
 
-        -- Объект таба
         local Tab = {
             Name = tabName,
             Icon = tabIcon,
@@ -934,13 +854,10 @@ local function AttachTabMethods(Window)
             TextLabel = TabText,
             IconLabel = TabIconImg,
             IsSelected = false,
+            Sections = {},
         }
 
-        -- ====================================================
-        -- Select (выбор таба)
-        -- ====================================================
         function Tab:Select()
-            -- Снимаем предыдущий
             if Window.CurrentTab and Window.CurrentTab ~= self then
                 local prev = Window.CurrentTab
                 Tween(prev.Button, { BackgroundTransparency = 0.4 }, 0.2)
@@ -953,7 +870,6 @@ local function AttachTabMethods(Window)
                 prev.IsSelected = false
             end
 
-            -- Активируем текущий
             Window.CurrentTab = self
             self.IsSelected = true
             self.Content.Visible = true
@@ -970,7 +886,6 @@ local function AttachTabMethods(Window)
             Tab:Select()
         end)
 
-        -- Регистрируем таб
         table.insert(Window.Tabs, Tab)
         if #Window.Tabs == 1 then
             Tab:Select()
@@ -979,9 +894,6 @@ local function AttachTabMethods(Window)
         return Tab
     end
 
-    -- ========================================================
-    -- CreateSection
-    -- ========================================================
     function Window:CreateSection(tab, sectionName)
         if not tab or not tab.Scroll then return end
 
@@ -1001,7 +913,6 @@ local function AttachTabMethods(Window)
             Transparency = 0.5,
         })
 
-        -- Заголовок секции с цветной полоской
         local TitleRow = Create("Frame", {
             Parent = SectionContainer,
             BackgroundTransparency = 1,
@@ -1026,7 +937,6 @@ local function AttachTabMethods(Window)
             TextXAlignment = Enum.TextXAlignment.Left,
         })
 
-        -- Контейнер для элементов
         local ItemContainer = Create("Frame", {
             Parent = SectionContainer,
             BackgroundTransparency = 1,
@@ -1047,28 +957,29 @@ local function AttachTabMethods(Window)
             Padding = UDim.new(0, 8),
         })
 
-        -- Возвращаем контейнер, чтобы добавлять элементы
         local Section = {
             Frame = SectionContainer,
             Container = ItemContainer,
             Name = sectionName,
+            Tab = tab,
         }
+
+        table.insert(tab.Sections, Section)
 
         return Section
     end
 end
 
-Sensei._Internal.AttachTabMethods = AttachTabMethods-- ============================================================
+Sensei._Internal.AttachTabMethods = AttachTabMethods
+-- ============================================================
 -- COMPONENTS: Button, Toggle
 -- ============================================================
 local _I = Sensei._Internal
 local Create = _I.Create
 local Tween = _I.Tween
 local AddBounce = _I.AddBounce
-local CreateIcon = _I.CreateIcon
-local Icons = _I.Icons
 
-local function AttachBasicComponents(Section, Tab)
+local function AttachBasicComponents(Section)
     local Container = Section.Container
 
     -- ========================================================
@@ -1131,7 +1042,6 @@ local function AttachBasicComponents(Section, Tab)
         local callback = config.Callback
         local flag = config.Flag
 
-        -- Читаем из флагов
         if flag and Sensei.Flags[flag] ~= nil then
             default = Sensei.Flags[flag] and true or false
         end
@@ -1200,30 +1110,26 @@ local function AttachBasicComponents(Section, Tab)
             internalSet(not state, true)
         end)
 
-        local obj = {
-            Value = state,
-            Set = function(v) internalSet(v, true) end,
-            Get = function() return state end,
-        }
-
-        -- Авто-вызов callback при загрузке, если flag установлен
         if flag and Sensei.Flags[flag] ~= nil and callback then
             task.defer(function() pcall(callback, state) end)
         end
 
-        return obj
+        return {
+            Value = state,
+            Set = function(v) internalSet(v, true) end,
+            Get = function() return state end,
+        }
     end
 end
 
-Sensei._Internal.AttachBasicComponents = AttachBasicComponents-- ============================================================
+Sensei._Internal.AttachBasicComponents = AttachBasicComponents
+-- ============================================================
 -- COMPONENTS: Slider, Dropdown
 -- ============================================================
 local _I = Sensei._Internal
 local Create = _I.Create
 local Tween = _I.Tween
 local AddBounce = _I.AddBounce
-local CreateIcon = _I.CreateIcon
-local Icons = _I.Icons
 local UserInputService = _I.Services.UserInputService
 
 local function AttachAdvancedComponents(Section)
@@ -1319,7 +1225,6 @@ local function AttachAdvancedComponents(Section)
             if fire ~= false and callback then pcall(callback, val) end
         end
 
-        -- Активная зона
         local Hit = Create("TextButton", {
             Parent = Frame,
             Text = "",
@@ -1358,17 +1263,15 @@ local function AttachAdvancedComponents(Section)
             end
         end)
 
-        local obj = {
-            Value = val,
-            Set = function(v) internalSet(v, true) end,
-            Get = function() return val end,
-        }
-
         if flag and Sensei.Flags[flag] ~= nil and callback then
             task.defer(function() pcall(callback, val) end)
         end
 
-        return obj
+        return {
+            Value = val,
+            Set = function(v) internalSet(v, true) end,
+            Get = function() return val end,
+        }
     end
 
     -- ========================================================
@@ -1544,7 +1447,11 @@ local function AttachAdvancedComponents(Section)
 
         updateText()
 
-        local obj = {
+        if flag and Sensei.Flags[flag] ~= nil and callback then
+            task.defer(function() pcall(callback, selected) end)
+        end
+
+        return {
             Value = selected,
             Set = function(v)
                 selected = v
@@ -1554,24 +1461,17 @@ local function AttachAdvancedComponents(Section)
             end,
             Get = function() return selected end,
         }
-
-        if flag and Sensei.Flags[flag] ~= nil and callback then
-            task.defer(function() pcall(callback, selected) end)
-        end
-
-        return obj
     end
 end
 
-Sensei._Internal.AttachAdvancedComponents = AttachAdvancedComponents-- ============================================================
+Sensei._Internal.AttachAdvancedComponents = AttachAdvancedComponents
+-- ============================================================
 -- COMPONENTS: Textbox, Label, Paragraph, Divider
 -- ============================================================
 local _I = Sensei._Internal
 local Create = _I.Create
 local Tween = _I.Tween
 local AddBounce = _I.AddBounce
-local CreateIcon = _I.CreateIcon
-local Icons = _I.Icons
 
 local function AttachTextComponents(Section)
     local Container = Section.Container
@@ -1783,18 +1683,110 @@ local function AttachTextComponents(Section)
         })
         return Wrap
     end
+
+    -- ========================================================
+    -- Keybind
+    -- ========================================================
+    Section.AddKeybind = function(self, config)
+        config = config or {}
+        local name = config.Name or "Keybind"
+        local defaultKey = config.Default or Enum.KeyCode.RightShift
+        local callback = config.Callback
+        local flag = config.Flag
+
+        if flag and type(Sensei.Flags[flag]) == "string" then
+            local ok, kc = pcall(function() return Enum.KeyCode[Sensei.Flags[flag]] end)
+            if ok and kc then defaultKey = kc end
+        end
+
+        local currentKey = defaultKey
+        local listening = false
+
+        local Frame = Create("Frame", {
+            Parent = Container,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 32),
+        })
+
+        Create("TextLabel", {
+            Parent = Frame,
+            Text = name,
+            Font = Enum.Font.Gotham,
+            TextSize = 12,
+            TextColor3 = _I.GetCurrentTheme().Text,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -80, 1, 0),
+            Position = UDim2.new(0, 2, 0, 0),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+        })
+
+        local KeyBtn = Create("TextButton", {
+            Parent = Frame,
+            Text = currentKey.Name,
+            Font = Enum.Font.GothamBold,
+            TextSize = 11,
+            TextColor3 = _I.GetCurrentTheme().Accent,
+            BackgroundColor3 = _I.GetCurrentTheme().Item,
+            Size = UDim2.new(0, 70, 0, 24),
+            Position = UDim2.new(1, -72, 0.5, -12),
+            AutoButtonColor = false,
+            BorderSizePixel = 0,
+        })
+        Create("UICorner", { Parent = KeyBtn, CornerRadius = UDim.new(0, 6) })
+        Create("UIStroke", {
+            Parent = KeyBtn,
+            Color = _I.GetCurrentTheme().Stroke,
+            Thickness = 1,
+            Transparency = 0.6,
+        })
+        AddBounce(KeyBtn)
+
+        local listenConn
+
+        local function stopListen()
+            listening = false
+            if listenConn then listenConn:Disconnect(); listenConn = nil end
+            KeyBtn.Text = currentKey.Name
+            Tween(KeyBtn, { TextColor3 = _I.GetCurrentTheme().Accent }, 0.2)
+        end
+
+        local function startListen()
+            if listening then stopListen(); return end
+            listening = true
+            KeyBtn.Text = "..."
+            Tween(KeyBtn, { TextColor3 = _I.GetCurrentTheme().Warning }, 0.2)
+            listenConn = _I.Services.UserInputService.InputBegan:Connect(function(input)
+                if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+                if input.KeyCode == Enum.KeyCode.Escape then stopListen(); return end
+                currentKey = input.KeyCode
+                stopListen()
+                if flag then Sensei.Flags[flag] = currentKey.Name end
+                if callback then pcall(callback, currentKey) end
+            end)
+        end
+
+        KeyBtn.MouseButton1Click:Connect(startListen)
+
+        return {
+            Set = function(kc)
+                if typeof(kc) == "EnumItem" then currentKey = kc end
+                KeyBtn.Text = currentKey.Name
+                if flag then Sensei.Flags[flag] = currentKey.Name end
+            end,
+            Get = function() return currentKey end,
+        }
+    end
 end
 
-Sensei._Internal.AttachTextComponents = AttachTextComponents-- ============================================================
--- COMPONENTS: Dialog, Keybind
+Sensei._Internal.AttachTextComponents = AttachTextComponents
+-- ============================================================
+-- COMPONENTS: Dialog
 -- ============================================================
 local _I = Sensei._Internal
 local Create = _I.Create
 local Tween = _I.Tween
 local AddBounce = _I.AddBounce
-local CreateIcon = _I.CreateIcon
-local Icons = _I.Icons
-local UserInputService = _I.Services.UserInputService
 
 local function AttachDialogComponents(Window)
     local ScreenGui = Window.ScreenGui
@@ -1909,7 +1901,7 @@ local function AttachDialogComponents(Window)
                 Text = optName,
                 Font = Enum.Font.GothamBold,
                 TextSize = 12,
-                TextColor3 = i == #options and Color3.fromRGB(255,255,255) or _I.GetCurrentTheme().Text,
+                TextColor3 = i == #options and Color3.fromRGB(255, 255, 255) or _I.GetCurrentTheme().Text,
                 BackgroundColor3 = i == #options and _I.GetCurrentTheme().Accent or _I.GetCurrentTheme().Item,
                 Size = UDim2.new(0, 100, 1, 0),
                 AutoButtonColor = false,
@@ -1933,107 +1925,9 @@ local function AttachDialogComponents(Window)
     end
 end
 
--- ============================================================
--- KEYBIND (отдельный компонент)
--- ============================================================
-local function AttachKeybindComponent(Section)
-    local Container = Section.Container
-
-    Section.AddKeybind = function(self, config)
-        config = config or {}
-        local name = config.Name or "Keybind"
-        local defaultKey = config.Default or Enum.KeyCode.RightShift
-        local callback = config.Callback
-        local flag = config.Flag
-
-        if flag and type(Sensei.Flags[flag]) == "string" then
-            local ok, kc = pcall(function() return Enum.KeyCode[Sensei.Flags[flag]] end)
-            if ok and kc then defaultKey = kc end
-        end
-
-        local currentKey = defaultKey
-        local listening = false
-
-        local Frame = Create("Frame", {
-            Parent = Container,
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 32),
-        })
-
-        Create("TextLabel", {
-            Parent = Frame,
-            Text = name,
-            Font = Enum.Font.Gotham,
-            TextSize = 12,
-            TextColor3 = _I.GetCurrentTheme().Text,
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, -80, 1, 0),
-            Position = UDim2.new(0, 2, 0, 0),
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextTruncate = Enum.TextTruncate.AtEnd,
-        })
-
-        local KeyBtn = Create("TextButton", {
-            Parent = Frame,
-            Text = currentKey.Name,
-            Font = Enum.Font.GothamBold,
-            TextSize = 11,
-            TextColor3 = _I.GetCurrentTheme().Accent,
-            BackgroundColor3 = _I.GetCurrentTheme().Item,
-            Size = UDim2.new(0, 70, 0, 24),
-            Position = UDim2.new(1, -72, 0.5, -12),
-            AutoButtonColor = false,
-            BorderSizePixel = 0,
-        })
-        Create("UICorner", { Parent = KeyBtn, CornerRadius = UDim.new(0, 6) })
-        Create("UIStroke", {
-            Parent = KeyBtn,
-            Color = _I.GetCurrentTheme().Stroke,
-            Thickness = 1,
-            Transparency = 0.6,
-        })
-        AddBounce(KeyBtn)
-
-        local listenConn
-
-        local function stopListen()
-            listening = false
-            if listenConn then listenConn:Disconnect(); listenConn = nil end
-            KeyBtn.Text = currentKey.Name
-            Tween(KeyBtn, { TextColor3 = _I.GetCurrentTheme().Accent }, 0.2)
-        end
-
-        local function startListen()
-            if listening then stopListen(); return end
-            listening = true
-            KeyBtn.Text = "..."
-            Tween(KeyBtn, { TextColor3 = _I.GetCurrentTheme().Warning }, 0.2)
-            listenConn = UserInputService.InputBegan:Connect(function(input)
-                if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-                if input.KeyCode == Enum.KeyCode.Escape then stopListen(); return end
-                currentKey = input.KeyCode
-                stopListen()
-                if flag then Sensei.Flags[flag] = currentKey.Name end
-                if callback then pcall(callback, currentKey) end
-            end)
-        end
-
-        KeyBtn.MouseButton1Click:Connect(startListen)
-
-        return {
-            Set = function(kc)
-                if typeof(kc) == "EnumItem" then currentKey = kc end
-                KeyBtn.Text = currentKey.Name
-                if flag then Sensei.Flags[flag] = currentKey.Name end
-            end,
-            Get = function() return currentKey end,
-        }
-    end
-end
-
 Sensei._Internal.AttachDialogComponents = AttachDialogComponents
-Sensei._Internal.AttachKeybindComponent = AttachKeybindComponent-- ============================================================
--- MINIMIZER + MOBILE BUTTON + CONFIG SAVE/LOAD
+-- ============================================================
+-- MINIMIZER + MOBILE BUTTON + CONFIG
 -- ============================================================
 local _I = Sensei._Internal
 local Create = _I.Create
@@ -2050,7 +1944,7 @@ local function AttachMinimizer(Window)
     local ScreenGui = Window.ScreenGui
 
     -- ========================================================
-    -- Mobile Button (плавающая кнопка открытия)
+    -- Mobile Button
     -- ========================================================
     local MobileButton = Create("ImageButton", {
         Parent = ScreenGui,
@@ -2073,7 +1967,6 @@ local function AttachMinimizer(Window)
     })
     AddBounce(MobileButton)
 
-    -- Перетаскивание мобильной кнопки
     do
         local dragging, dragInput, dragStart, startPos
         MobileButton.InputBegan:Connect(function(input)
@@ -2106,16 +1999,11 @@ local function AttachMinimizer(Window)
         end)
     end
 
-    -- Клик по кнопке → открыть окно
     MobileButton.MouseButton1Click:Connect(function()
         Window.MainFrame.Visible = true
         MobileButton.Visible = false
     end)
 
-    -- ========================================================
-    -- Minimize Hook (перехватываем сворачивание)
-    -- ========================================================
-    -- Обёртка над Minimize — показывает мобильную кнопку
     local _origMinimize = Window.Minimize
     function Window:Minimize()
         if _origMinimize then pcall(_origMinimize) end
@@ -2123,9 +2011,6 @@ local function AttachMinimizer(Window)
         MobileButton.Visible = true
     end
 
-    -- ========================================================
-    -- Minimizer Keybind (сворачивание по клавише)
-    -- ========================================================
     function Window:NewMinimizer(config)
         config = config or {}
         local keyCode = config.KeyCode or Enum.KeyCode.LeftControl
@@ -2152,7 +2037,7 @@ local function AttachMinimizer(Window)
     end
 
     -- ========================================================
-    -- Config: Save / Load Flags
+    -- Config Save / Load
     -- ========================================================
     function Window:SaveConfig(slot)
         slot = slot or "default"
@@ -2210,16 +2095,16 @@ local function AttachMinimizer(Window)
     end
 end
 
-Sensei._Internal.AttachMinimizer = AttachMinimizer-- ============================================================
--- UTILITY: Confirm, Notify Group, Export
+Sensei._Internal.AttachMinimizer = AttachMinimizer
+-- ============================================================
+-- UTILITY: Confirm, NotifyGroup, Export
 -- ============================================================
 local _I = Sensei._Internal
 local Create = _I.Create
 local Tween = _I.Tween
-local AddBounce = _I.AddBounce
 
 -- ============================================================
--- CONFIRM (быстрый хелпер над Dialog)
+-- CONFIRM
 -- ============================================================
 function Sensei:Confirm(options)
     options = options or {}
@@ -2253,7 +2138,7 @@ function Sensei:Confirm(options)
 end
 
 -- ============================================================
--- NOTIFY GROUP (групповые уведомления)
+-- NOTIFY GROUP
 -- ============================================================
 function Sensei:NotifyGroup(defaults)
     defaults = defaults or {}
@@ -2273,7 +2158,7 @@ function Sensei:NotifyGroup(defaults)
 end
 
 -- ============================================================
--- DESTROY ALL WINDOWS
+-- DESTROY ALL
 -- ============================================================
 function Sensei:DestroyAll()
     for _, win in ipairs(Sensei.Windows) do
@@ -2284,7 +2169,7 @@ function Sensei:DestroyAll()
 end
 
 -- ============================================================
--- GET FLAG / SET FLAG
+-- FLAGS
 -- ============================================================
 function Sensei:GetFlag(name)
     return Sensei.Flags[name]
@@ -2299,12 +2184,12 @@ function Sensei:DeleteFlags()
 end
 
 -- ============================================================
--- THEME REGISTER (кастомные темы)
+-- THEME REGISTER
 -- ============================================================
 function Sensei:RegisterTheme(name, theme)
     if type(name) ~= "string" or type(theme) ~= "table" then return end
     _I.Themes[name] = {
-        Name = name,
+        Name        = name,
         Accent      = theme.Accent or _I.GetCurrentTheme().Accent,
         AccentLight = theme.AccentLight or (theme.Accent or _I.GetCurrentTheme().Accent):Lerp(Color3.new(1,1,1), 0.4),
         AccentDark  = theme.AccentDark or _I.GetCurrentTheme().AccentDark,
@@ -2322,7 +2207,7 @@ function Sensei:RegisterTheme(name, theme)
 end
 
 -- ============================================================
--- APPLY THEME ко всем открытым окнам
+-- APPLY THEME
 -- ============================================================
 function Sensei:ApplyTheme(name)
     if not _I.Themes[name] then return end
@@ -2335,7 +2220,7 @@ function Sensei:ApplyTheme(name)
 end
 
 -- ============================================================
--- EXPORT to getgenv
+-- EXPORT TO getgenv
 -- ============================================================
 if getgenv then
     pcall(function()
@@ -2360,48 +2245,42 @@ end
 -- PRINT LOADED
 -- ============================================================
 print("[Sensei] Loaded, version:", Sensei.Version)
-print("[Sensei] Available themes:", table.concat(Sensei:GetThemes(), ", "))-- ============================================================
+print("[Sensei] Themes:", table.concat(Sensei:GetThemes(), ", "))
+-- ============================================================
 -- FINAL PATCH: CreateWindow
--- Прикрепляем все методы к Window
 -- ============================================================
 local _I = Sensei._Internal
 local _origCreateWindow = Sensei.CreateWindow
 
 function Sensei:CreateWindow(options)
-    -- Создаём окно
     local Window = _origCreateWindow(self, options)
 
-    -- 1. Прикрепляем методы CreateTab / CreateSection
+    -- 1. CreateTab / CreateSection
     _I.AttachTabMethods(Window)
 
-    -- 2. Прикрепляем компоненты к каждой Section
+    -- 2. Оборачиваем CreateSection, чтобы приклеить компоненты
     local _origCreateSection = Window.CreateSection
     function Window:CreateSection(tab, sectionName)
         local Section = _origCreateSection(self, tab, sectionName)
-
-        -- Прикрепляем все наборы компонентов
-        _I.AttachBasicComponents(Section, tab)     -- Button, Toggle
-        _I.AttachAdvancedComponents(Section)       -- Slider, Dropdown
-        _I.AttachTextComponents(Section)           -- Textbox, Label, Paragraph, Divider
-        _I.AttachKeybindComponent(Section)         -- Keybind
-
+        _I.AttachBasicComponents(Section)
+        _I.AttachAdvancedComponents(Section)
+        _I.AttachTextComponents(Section)
         return Section
     end
 
-    -- 3. Прикрепляем Dialog
+    -- 3. Dialog
     _I.AttachDialogComponents(Window)
 
-    -- 4. Прикрепляем Minimizer, Mobile Button, Config
+    -- 4. Minimizer / Mobile / Config
     _I.AttachMinimizer(Window)
 
-    -- 5. Регистрируем окно
     Window.CurrentTab = nil
 
     return Window
 end
 
 -- ============================================================
--- UTILITY: Quick Hub (быстрое создание)
+-- QUICK HUB
 -- ============================================================
 function Sensei:QuickHub(config)
     config = config or {}
